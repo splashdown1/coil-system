@@ -1,0 +1,42 @@
+{
+  "schema_version": "1.0",
+  "source": "LOGOS_ENGINE",
+  "last_verified": "2026-05-04T23:25:00Z",
+  "facts": [
+    {
+      "id": "base_001",
+      "fact": "Project Logos v0.2.0 active",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "version"
+    },
+    {
+      "id": "base_002",
+      "fact": "Tru-centric dashboard bridge active",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "infrastructure"
+    },
+    {
+      "id": "base_003",
+      "fact": "zo.space Tru routes deployed on splashdown",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "infrastructure"
+    },
+    {
+      "id": "base_004",
+      "fact": "COIL_UNBOUND pipeline in standby",
+      "status": "verified",
+      "conf": 0.95,
+      "category": "project_state"
+    },
+    {
+      "id": "base_005",
+      "fact": "Tru identity: Dry Truth, Steady Nudge (id: a4af250b-edf6-493d-8659-17c2382111b8)",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "identity"
+    }
+  ]
+}
