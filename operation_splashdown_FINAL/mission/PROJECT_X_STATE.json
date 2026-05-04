@@ -1,0 +1,12 @@
+{
+  "protocol": "COIL_SPLASHDOWN_EXECUTION",
+  "status": "STANDBY",
+  "monitor_started": "2026-04-26T03:44:00Z",
+  "entry_vix": 18.69,
+  "entry_qqq": 663.91,
+  "position_open": true,
+  "alerts": [
+    "Position opened \u2014 QQQ:663.91 VIX:18.69"
+  ],
+  "trade_log": []
+}

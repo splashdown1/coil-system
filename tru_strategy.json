@@ -1,0 +1,81 @@
+{
+  "agentName": "Tru_Moonshot_Sniper_v1",
+  "engine": "Adaptive_Pulse",
+  "network": "Solana",
+  "wallets": {
+    "trading": "Primary_Phantom_Burner",
+    "vault": "Cold_Storage_Farmer"
+  },
+  "strategy": {
+    "entry_logic": {
+      "trigger": "Pulse_Spike",
+      "conditions": [
+        {
+          "label": "Social_Pulse",
+          "min_volume_usd_1m": 5000,
+          "reason": "Detect early momentum"
+        },
+        {
+          "label": "Rug_Check",
+          "liquidity_locked": true,
+          "mint_renounced": true,
+          "reason": "Safety shield"
+        },
+        {
+          "label": "Elite_Filter",
+          "min_holders": 50,
+          "max_top_10_holding": "25%",
+          "reason": "Avoid centralization"
+        }
+      ]
+    },
+    "position_sizing": {
+      "initial_bet": "0.1 SOL",
+      "auto_scale_combo": {
+        "win_streak_multiplier": 1.2,
+        "max_bet_cap": "0.5 SOL",
+        "loss_reset": true
+      }
+    },
+    "exit_logic": {
+      "take_profit_points": [
+        {
+          "threshold": "2x",
+          "sell_pct": 50,
+          "action": "Move_to_Vault"
+        },
+        {
+          "threshold": "5x",
+          "sell_pct": 25,
+          "action": "Moon_Bag_Hold"
+        }
+      ],
+      "stop_loss": {
+        "type": "Ghost_Stop",
+        "threshold_pct": -30,
+        "reason": "Protect capital on failed pulses"
+      }
+    }
+  },
+  "safety_circuit_breakers": {
+    "max_daily_drawdown": "15%",
+    "cooldown_period_minutes": 60,
+    "manual_approval_threshold": "1.0 SOL"
+  },
+  "profit_lock_adjustment": {
+    "new_floor": 0.81,
+    "logic": "Old_Floor (0.11) + Session_Profit (0.70)",
+    "reason": "Compounding gains into locked vault"
+  },
+  "session_id": "TRU_MISSION_001_COMPLETE",
+  "performance_stats": {
+    "orbs_absorbed": 12,
+    "win_loss_ratio": "3:1",
+    "net_profit_sol": 0.6999,
+    "efficiency_score": "High (Avg Slip < 4%)"
+  },
+  "aggressive_mode": {
+    "status": "Disabled",
+    "reason": "Maintaining safety filters to preserve 75% win rate"
+  }
+}

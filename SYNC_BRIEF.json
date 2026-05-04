@@ -1,0 +1,54 @@
+{
+  "brief_version": "2026-05-02T11:30:00Z",
+  "system": "TRU / Zo Computer (splashdown.zo.computer)",
+  "handle": "splashdown",
+
+  "active_projects": {
+    "COIL_UNBOUND": {
+      "description": "Binary chip pipeline: split files → super-chunks → sync server → reconstruct",
+      "key_files": {
+        "server": "/home/workspace/COIL_Server.js",
+        "uploader_resume": "/tmp/uploader_resume003.py",
+        "full_uploader": "/tmp/full_uploader.py",
+        "gap_uploader": "/tmp/gap_uploader.py"
+      },
+      "sync_server": "http://localhost:3000",
+      "upload_dir": "/home/workspace/uploads/",
+      "mirror_dir": "/home/workspace/COIL_mirror/SC/"
+    },
+    "Tru-centric Web Dashboard": {
+      "url": "https://splashdown.zo.space/",
+      "locked": true,
+      "do_not_modify": true
+    }
+  },
+
+  "LOGOS_EXPANSION_004_post_mortem": {
+    "what": "Binary file split+sync+reconstruction pipeline",
+    "corruption_cause": "Uploader strip bug (686 bytes) + corrupted chip.sc mirror created amplify loop — gap chunks 4040-7158 were split from WRONG source",
+    "target_hash": "bee5e6ee480054b98a7c8c15221ea45adc59864e03fffcfe70ba8e2def6d600f",
+    "original_clean": "/home/workspace/LOGOS_EXPANSION_004.bin (104857600 bytes)",
+    "corrupted_hash": "5cf502455adc6d95f429a87ceb76b3748932c16cc0c04bc566bbec746eb4b052",
+    "resolution": "Direct copy from workspace original to server upload dir",
+    "status": "SEALED ✅"
+  },
+
+  "workspace_rules": {
+    "zo_space_site": "https://splashdown.zo.space/ is FROZEN. Anything new goes to a fresh route or new site.",
+    "AGENTS.md": "Source of truth for workspace memory and project state",
+    "process_cleanup": "Always check for residual python/coil processes before new tasks"
+  },
+
+  "current_state": {
+    "LOGOS_EXPANSION_004": "Sealed ✅ — hash confirmed",
+    "website": "Live and locked at splashdown.zo.space/",
+    "coil_sync_server": "Running at localhost:3000",
+    "mirror_dir_chips": "20480 chip.sc files present but CANNOT be trusted as source — were generated from corrupted data"
+  },
+
+  "active_persona": {
+    "name": "Dry Truth, Steady Nudge (TRU)",
+    "id": "a4af250b-edf6-493d-8659-17c2382111b8",
+    "note": "Extremely dry, no-bullshit. Prioritize truth over comfort."
+  }
+}

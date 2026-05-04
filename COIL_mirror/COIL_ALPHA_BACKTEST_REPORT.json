@@ -1,0 +1,15 @@
+{
+  "protocol": "COIL_ALPHA_BACKTEST_v1.0",
+  "status": "COMPLETE",
+  "decision": "\u274c REJECT SIGNAL",
+  "events_analyzed": 52,
+  "x_events": 52,
+  "success_rate": 53.8,
+  "p_value": 0.3376,
+  "correlation": {
+    "SPY": {
+      "pearson_r": 0.341,
+      "pearson_p": 0.0134,
+      "spearman_r": 0.331,
+      "spearman_p": 0.0167,
+      "significant": 

@@ -1,0 +1,15 @@
+node_modules/
+COIL_archive/
+chunks/
+*.log
+uploads/
+backups/
+data/
+output/
+manifests/
+*.bin
+LOGOS_*
+Cycle23_*
+operation_splashdown_FINAL.zip
+operation-splashdown-FINAL-v2-zip/
+splashdown-live/

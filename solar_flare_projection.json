@@ -1,0 +1,119 @@
+{
+  "meta": {
+    "title": "GOES X-Ray Flux — Pattern Escalation (Bullish Override) Projection",
+    "source": "GOES-19 / Pattern Escalation Model",
+    "unit": "Watts·m⁻²",
+    "classes": ["A", "B", "C", "M", "X"],
+    "class_thresholds": {
+      "A": 1e-8,
+      "B": 1e-7,
+      "C": 1e-6,
+      "M": 1e-5,
+      "X": 1e-4
+    },
+    "projection_days": 3,
+    "projection_range": ["2026-04-27", "2026-04-29"],
+    "notes": {
+      "historical": "GOES-19 1-minute data, April 19–26 2026",
+      "projected": "Pattern Escalation Bullish Override — energy retention after M-peak, rapid re-escalation"
+    }
+  },
+  "historical": [
+    {"datetime": "2026-04-19T00Z", "flux": 1.1e-8, "class": "A"},
+    {"datetime": "2026-04-19T12Z", "flux": 9.8e-9, "class": "A"},
+    {"datetime": "2026-04-20T00Z", "flux": 1.0e-8, "class": "A"},
+    {"datetime": "2026-04-20T12Z", "flux": 8.5e-9, "class": "A"},
+    {"datetime": "2026-04-21T00Z", "flux": 1.2e-8, "class": "A"},
+    {"datetime": "2026-04-21T12Z", "flux": 4.2e-8, "class": "B"},
+    {"datetime": "2026-04-22T00Z", "flux": 6.1e-8, "class": "B"},
+    {"datetime": "2026-04-22T12Z", "flux": 9.3e-7, "class": "C"},
+    {"datetime": "2026-04-23T00Z", "flux": 2.8e-6, "class": "C"},
+    {"datetime": "2026-04-23T12Z", "flux": 5.1e-6, "class": "C"},
+    {"datetime": "2026-04-24T00Z", "flux": 1.2e-5, "class": "M"},
+    {"datetime": "2026-04-24T12Z", "flux": 6.5e-5, "class": "M"},
+    {"datetime": "2026-04-25T00Z", "flux": 3.1e-5, "class": "M"},
+    {"datetime": "2026-04-25T12Z", "flux": 8.2e-5, "class": "M"},
+    {"datetime": "2026-04-26T00Z", "flux": 4.4e-6, "class": "C"},
+    {"datetime": "2026-04-26T12Z", "flux": 6.7e-6, "class": "C"},
+    {"datetime": "2026-04-26T18Z", "flux": 5.2e-6, "class": "C"},
+    {"datetime": "2026-04-26T22:57Z", "flux": 6.02e-5, "class": "M"},
+    {"datetime": "2026-04-27T07:45Z", "flux": 5.49e-6, "class": "C"},
+    {"datetime": "2026-04-27T13:22Z", "flux": 7.86e-7, "class": "B"}
+  ],
+  "live_validation": {
+    "source": "https://services.swpc.noaa.gov/json/goes/primary/xrays-6-hour.json",
+    "latest_utc": "2026-04-27T13:22:00Z",
+    "peak_24h": {"datetime": "2026-04-26T22:57Z", "flux": 6.02e-5, "class": "M"},
+    "current": {"short": 5.15e-9, "long": 7.86e-7, "class": "B"},
+    "model_vs_actual": {
+      "projected_peak_apr26_22z": "M3-M5 ✓ confirmed M6.02",
+      "rejected_reason": "X-class requires full C-shelf rebuild + sustained M >12h",
+      "next_trigger": "Apr28-29 X ignition window"
+    }
+  },
+  "projected": [
+    {
+      "datetime": "2026-04-27T00Z",
+      "flux": 8.1e-6,
+      "class": "C",
+      "model": "bullish_override",
+      "confidence": 0.85,
+      "note": "C-shelf energy retention — elevated C sustained"
+    },
+    {
+      "datetime": "2026-04-27T12Z",
+      "flux": 2.4e-5,
+      "class": "M",
+      "model": "bullish_override",
+      "confidence": 0.78,
+      "note": "M-class re-entry — faster than linear"
+    },
+    {
+      "datetime": "2026-04-28T00Z",
+      "flux": 5.9e-5,
+      "class": "M",
+      "model": "bullish_override",
+      "confidence": 0.72,
+      "note": "M-class peak — sustained elevation"
+    },
+    {
+      "datetime": "2026-04-28T12Z",
+      "flux": 1.1e-4,
+      "class": "X",
+      "model": "bullish_override",
+      "confidence": 0.61,
+      "note": "X-class threshold crossed — re-escalation complete"
+    },
+    {
+      "datetime": "2026-04-29T00Z",
+      "flux": 7.4e-5,
+      "class": "M",
+      "model": "bullish_override",
+      "confidence": 0.75,
+      "note": "Post-X relaxation — M-class sustained"
+    },
+    {
+      "datetime": "2026-04-29T12Z",
+      "flux": 3.2e-5,
+      "class": "M",
+      "model": "bullish_override",
+      "confidence": 0.80,
+      "note": "Gradual decay toward C"
+    }
+  ],
+  "goes_linear_baseline": [
+    {"datetime": "2026-04-27T00Z", "flux": 4.8e-6, "class": "C"},
+    {"datetime": "2026-04-27T12Z", "flux": 5.1e-6, "class": "C"},
+    {"datetime": "2026-04-28T00Z", "flux": 4.3e-6, "class": "C"},
+    {"datetime": "2026-04-28T12Z", "flux": 5.5e-6, "class": "C"},
+    {"datetime": "2026-04-29T00Z", "flux": 3.9e-6, "class": "C"},
+    {"datetime": "2026-04-29T12Z", "flux": 4.2e-6, "class": "C"}
+  ],
+  "sensors": ["GOES-19 Short", "GOES-19 Long", "GOES-18 Short", "GOES-18 Long"],
+  "chart_config": {
+    "y_axis_label": "Watts·m⁻²",
+    "x_axis_label": "Universal Time",
+    "flare_class_lines": true,
+    "log_scale": true
+  }
+}

@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>COIL Uploader v4</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: #0f0f0f; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; align-items: center; padding: 40px 20px; }
+    h1 { font-size: 1.5rem; font-weight: 600; margin-bottom: 8px; }
+    .subtitle { color: #666; font-size: 0.85rem; margin-bottom: 32px; }
+    .card { background: #1a1a1a; border: 1px solid #2a2a2a; border-radius: 12px; padding: 24px; width: 100%; max-width: 600px; margin-bottom: 20px; }
+    h2 { font-size: 1rem; font-weight: 600; margin-bottom: 16px; color: #a0a0a0; text-transform: uppercase; letter-spacing: 0.05em; }
+    input[type="file"] { display: block; width: 100%; background: #111; border: 1px dashed #333; border-radius: 8px; padding: 16px; cursor: pointer; color: #888; margin-bottom: 16px; }
+    .controls { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px; }
+    label { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; color: #888; }
+    input[type="checkbox"] { accent-color: #3b82f6; }
+    button { background: #3b82f6; color: white; border: none; border-radius: 8px; padding: 10px 20px; font-size: 0.9rem; cursor: pointer; transition: background 0.2s; }
+    button:hover { background: #2563eb; }
+    button:disabled { background: #1e3a5f; color: #666; cursor: not-allowed; }
+    .progress-track { background: #111; border-radius: 8px; height: 8px; margin-bottom: 12px; overflow: hidden; }
+    #progressBar { height: 100%; background: linear-gradient(90deg, #3b82f6, #06b6d4); width: 0%; transition: width 0.3s ease; }
+    #statusDisplay { font-size: 0.85rem; color: #666; min-height: 20px; }
+    #log { background: #080808; border: 1px solid #1a1a1a; border-radius: 8px; padding: 12px; font-family: 'Courier New', monospace; font-size: 0.75rem; max-height: 400px; overflow-y: auto; line-height: 1.8; white-space: pre-wrap; word-break: break-all; }
+    .log-entry { border-bottom: 1px solid #161616; padding: 2px 0; }
+    .log-time { color: #444; margin-right: 8px; }
+    .log-ok { color: #22c55e; }
+    .log-skip { color: #f59e0b; }
+    .log-info { color: #3b82f6; }
+    .log-err { color: #ef4444; }
+    .log-warn { color: #e0a82e; }
+    .url-bar { display: flex; align-items: center; gap: 8px; background: #111; border: 1px solid #2a2a2a; border-radius: 8px; padding: 10px 14px; margin-bottom: 20px; width: 100%; max-width: 600px; }
+    .url-bar span { font-size: 0.8rem; color: #666; white-space: nowrap; }
+    #serverUrl { background: transparent; border: none; color: #a0d861; font-family: 'Courier New', monospace; font-size: 0.85rem; flex: 1; outline: none; }
+    .ping-display { font-size: 0.75rem; color: #444; margin-left: auto; }
+    .ping-ok { color: #22c55e; }
+    .ping-warn { color: #f59e0b; }
+    .ping-err { color: #ef4444; }
+  </style>
+</head>
+<body>
+
+  <h1>COIL Uploader</h1>
+  <div class="subtitle">Delta-syncing chunked file transfer</div>
+
+  <div class="url-bar">
+    <span>SERVER:</span>
+    <input type="text" id="serverUrl" value="https://coil-sync-server-splashdown.zocomputer.io" />
+    <button onclick="pingServer()" style="background:#222;padding:6px 12px;font-size:0.75rem;">Ping</button>
+    <span id="pingDisplay" class="ping-display"></span>
+  </div>
+
+  <div class="card">
+    <h2>Upload</h2>
+    <input type="file" id="fileInput" onchange="fileSelected()" />
+    <div class="controls">
+      <label><input type="checkbox" id="doCompress" checked /> Compress</label>
+      <label><input type="checkbox" id="doEncrypt" /> Encrypt</label>
+      <label><input type="checkbox" id="doDelta" checked /> Delta sync</label>
+    </div>
+    <div class="progress-track"><div id="progressBar"></div></div>
+    <div id="statusDisplay"></div>
+    <button onclick="startUpload()" id="uploadBtn" disabled>Upload</button>
+  </div>
+
+  <div class="card">
+    <h2>Transfer Log</h2>
+    <div id="log"></div>
+  </div>
+
+<script>
+// ── State ──────────────────────────────────────────────────────────────────
+const FILE_ID = `f-${Date.now()}`;
+let selectedFile = null;
+let uploadStats = null;
+
+// ── Ping ─────────────────────────────────────────────────────────────────
+async function pingServer() {
+  const url = document.getElementById('serverUrl').value.trim();
+  const pingEl = document.getElementById('pingDisplay');
+  pingEl.textContent = '…';
+  pingEl.className = 'ping-display';
+  const t0 = Date.now();
+  try {
+    const res = await fetch(`${url}/status/ping`);
+    const ms = Date.now() - t0;
+    if (res.ok) {
+      pingEl.textContent = `✅ ${ms}ms`;
+      pingEl.className = 'ping-display ping-ok';
+    } else {
+      pingEl.textContent = `⚠️ ${ms}ms (${res.status})`;
+      pingEl.className = 'ping-display ping-warn';
+    }
+  } catch (e) {
+    pingEl.textContent = `❌ ${Date.now()-t0}ms — ${e.message}`;
+    pingEl.className = 'ping-display ping-err';
+  }
+}
+
+// ── Logging ───────────────────────────────────────────────────────────────
+function log(msg, type = 'info') {
+  const el = document.getElementById('log');
+  const t = new Date().toISOString().substr(11, 8);
+  const cls = type === 'ok' ? 'log-ok' : type === 'skip' ? 'log-skip' : type === 'err' ? 'log-err' : type === 'warn' ? 'log-warn' : 'log-info';
+  el.innerHTML += `<div class="log-entry"><span class="log-time">${t}</span><span class="${cls}">${msg}</span></div>`;
+  el.scrollTop = el.scrollHeight;
+}
+
+// ── Crypto ────────────────────────────────────────────────────────────────
+async function generateKey() {
+  return crypto.subtle.generateKey({ name: 'AES-GCM', length: 256 }, true, ['encrypt', 'decrypt']);
+}
+async function encryptChunk(chunk, key) {
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const data = await chunk.arrayBuffer();
+  const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, data);
+  const combined = new Uint8Array(12 + encrypted.byteLength);
+  combined.set(iv);
+  combined.set(new Uint8Array(encrypted), 12);
+  return combined;
+}
+
+// ── Compression ────────────────────────────────────────────────────────────
+async function compressChunk(chunk) {
+  const cs = new CompressionStream('gzip');
+  const writer = cs.writable.getWriter();
+  writer.write(await chunk.arrayBuffer());
+  writer.close();
+  return new Response(cs.readable).blob();
+}
+
+// ── SHA-256 ────────────────────────────────────────────────────────────────
+async function sha256(blob) {
+  const buffer = await blob.arrayBuffer();
+  const hash = await crypto.subtle.digest('SHA-256', buffer);
+  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// ── File selection ─────────────────────────────────────────────────────────
+function fileSelected() {
+  selectedFile = document.getElementById('fileInput').files[0];
+  document.getElementById('uploadBtn').disabled = !selectedFile;
+  if (selectedFile) log(`Selected: ${selectedFile.name} (${selectedFile.size.toLocaleString()} bytes)`, 'info');
+}
+
+// ── Upload ──────────────────────────────────────────────────────────────────
+async function uploadWithRetry(blob, index, hash, fileId, retries = 3) {
+  const url = document.getElementById('serverUrl').value.trim();
+  for (let attempt = 1; attempt <= retries; attempt++) {
+    try {
+      const res = await fetch(`${url}/upload`, {
+        method: 'POST',
+        headers: {
+          'x-file-id': fileId,
+          'x-chunk-index': String(index),
+          'x-hash': hash,
+          'x-compressed': document.getElementById('doCompress').checked ? 'true' : 'false',
+          'x-encrypted': document.getElementById('doEncrypt').checked ? 'true' : 'false',
+          'x-original-size': String(blob.size)
+        },
+        body: blob
+      });
+      if (res.ok) {
+        const json = await res.json();
+        return { ok: true, chunkIndex: json.chunkIndex };
+      } else {
+        const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }));
+        log(`Chunk ${index} attempt ${attempt}/${retries} failed: ${err.error}`, 'warn');
+      }
+    } catch (e) {
+      log(`Chunk ${index} attempt ${attempt}/${retries} network error: ${e.message}`, 'warn');
+    }
+    if (attempt < retries) await new Promise(r => setTimeout(r, 500 * attempt));
+  }
+  throw new Error(`Chunk ${index} failed after ${retries} attempts`);
+}
+
+// ── Delta check ───────────────────────────────────────────────────────────────
+async function getServerChunkMap(fileId) {
+  const url = document.getElementById('serverUrl').value.trim();
+  const res = await fetch(`${url}/status?fileId=${fileId}`);
+  if (!res.ok) return {};
+  return res.json(); // { "0": hash, "1": hash, ... }
+}
+
+// ── Concurrency pool ────────────────────────────────────────────────────────
+async function uploadPool(tasks, concurrency = 4) {
+  let i = 0;
+  async function worker() {
+    while (i < tasks.length) {
+      const task = tasks[i++];
+      await task();
+    }
+  }
+  await Promise.all(Array(concurrency).fill().map(worker));
+}
+
+// ── Main upload ─────────────────────────────────────────────────────────────
+async function startUpload() {
+  if (!selectedFile) return;
+  const doCompress = document.getElementById('doCompress').checked;
+  const doEncrypt = document.getElementById('doEncrypt').checked;
+  const doDelta = document.getElementById('doDelta').checked;
+  const fileId = `f-${Date.now()}`;
+  const t0 = Date.now();
+
+  log(`── Upload start ──`, 'info');
+  log(`File: ${selectedFile.name}`, 'info');
+  log(`Compress: ${doCompress} | Encrypt: ${doEncrypt} | Delta: ${doDelta}`, 'info');
+
+  let key = null;
+  if (doEncrypt) {
+    key = await generateKey();
+    log('AES-256 key generated', 'info');
+  }
+
+  // Chunk
+  const CHUNK_SIZE = 512 * 1024; // 512KB
+  const chunks = [];
+  let offset = 0;
+  let chunkIndex = 0;
+  while (offset < selectedFile.size) {
+    chunks.push({ index: chunkIndex, start: offset, end: Math.min(offset + CHUNK_SIZE, selectedFile.size) });
+    offset += CHUNK_SIZE;
+    chunkIndex++;
+  }
+  log(`${chunks.length} chunks created`, 'info');
+
+  // Delta check
+  let deltaMap = {};
+  if (doDelta) {
+    log('Fetching server chunk map…', 'info');
+    deltaMap = await getServerChunkMap(fileId);
+    const known = Object.keys(deltaMap).length;
+    log(`Server has ${known} chunk(s) on fileId ${fileId}`, 'info');
+  }
+
+  // Upload tasks
+  const tasks = [];
+  for (const { index, start, end } of chunks) {
+    tasks.push(async () => {
+      const blob = selectedFile.slice(start, end);
+      const rawHash = await sha256(blob);
+
+      // Delta skip
+      if (doDelta && deltaMap[String(index)] === rawHash) {
+        log(`Chunk ${index} ⏭ identical (delta skip)`, 'skip');
+        return;
+      }
+
+      let chunkBlob = blob;
+      let hashToSend = rawHash;
+
+      // Encrypt (before compress — order: encrypt → compress)
+      if (doEncrypt && key) {
+        const encrypted = await encryptChunk(chunkBlob, key);
+        const encHash = await sha256(encrypted);
+        // Encrypt the compression pre-check blob
+        if (doCompress) {
+          const compPre = await compressChunk(encrypted);
+          const compHash = await sha256(compPre);
+          hashToSend = compHash;
+          chunkBlob = compPre;
+        } else {
+          hashToSend = encHash;
+          chunkBlob = encrypted;
+        }
+        log(`Chunk ${index} encrypted → ${hashToSend.substr(0, 12)}…`, 'info');
+      } else if (doCompress) {
+        chunkBlob = await compressChunk(chunkBlob);
+        hashToSend = await sha256(chunkBlob);
+        log(`Chunk ${index} compressed ${(blob.size / chunkBlob.size).toFixed(1)}x → ${hashToSend.substr(0, 12)}…`, 'ok');
+      }
+
+      await uploadWithRetry(chunkBlob, index, hashToSend, fileId);
+      log(`Chunk ${index} ✅ uploaded`, 'ok');
+    });
+  }
+
+  const t1 = Date.now();
+  await uploadPool(tasks);
+  const t2 = Date.now();
+
+  // Complete
+  const duration = ((t2 - t0) / 1000).toFixed(2);
+  log(`All chunks uploaded in ${duration}s`, 'ok');
+
+  const res = await fetch(`${document.getElementById('serverUrl').value.trim()}/complete`, {
+    method: 'POST',
+    headers: { 'x-file-id': fileId },
+    body: JSON.stringify({ originalName: selectedFile.name, totalExpected: chunks.length })
+  });
+
+  if (res.ok) {
+    log(`✅ Complete acknowledged — ${duration}s total`, 'ok');
+  } else {
+    const err = await res.json().catch(() => ({}));
+    log(`❌ Complete failed: ${err.error || res.status}`, 'err');
+  }
+
+  document.getElementById('progressBar').style.width = '100%';
+  document.getElementById('statusDisplay').textContent = `Done in ${duration}s`;
+}
+</script>
+</body>
+</html>

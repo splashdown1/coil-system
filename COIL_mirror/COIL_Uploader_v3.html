@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>COIL Uploader v3</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Courier New', monospace; background: #0a0a0a; color: #00ff41; padding: 24px; }
+    h2 { color: #00ff41; margin-bottom: 16px; }
+    .panel { border: 1px solid #00ff41; padding: 16px; margin-bottom: 16px; background: #0d1a0d; }
+    input[type="file"] { color: #00ff41; background: #0a0a0a; border: 1px solid #00ff41; padding: 8px; width: 100%; margin-bottom: 12px; }
+    button { background: #00ff41; color: #0a0a0a; border: none; padding: 10px 20px; font-family: inherit; font-weight: bold; cursor: pointer; margin-right: 8px; margin-bottom: 8px; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    #log { height: 240px; overflow: auto; border: 1px solid #00ff41; padding: 12px; background: #050f05; font-size: 12px; line-height: 1.6; }
+    #progress { width: 100%; height: 24px; background: #111; margin-top: 12px; border: 1px solid #00ff41; }
+    #bar { height: 100%; width: 0%; background: #00ff41; transition: width 0.2s; }
+    .stats { display: flex; gap: 24px; font-size: 12px; margin-top: 8px; }
+    .stat-label { color: #007a1a; }
+    #resumeInfo { font-size: 12px; color: #007a1a; margin-bottom: 12px; display: none; }
+    .hash-mismatch { background: #2a0000; color: #ff4141; padding: 4px 8px; border: 1px solid #ff4141; margin-top: 8px; display: none; }
+  </style>
+</head>
+<body>
+<h2>COIL Uploader v3 (Delta + Zstd + SHA-256)</h2>
+
+<div class="panel">
+  <input type="file" id="fileInput" />
+  <div id="resumeInfo"></div>
+  <button id="startBtn" onclick="startUpload()">Start Upload</button>
+  <button id="cancelBtn" onclick="cancelUpload()" disabled>Cancel</button>
+  <div id="progress"><div id="bar"></div></div>
+  <div class="stats">
+    <span><span class="stat-label">Chunks:</span> <span id="chunkCount">0</span></span>
+    <span><span class="stat-label">Retries:</span> <span id="retryCount">0</span></span>
+    <span><span class="stat-label">Speed:</span> <span id="speedDisplay">--</span></span>
+    <span><span class="stat-label">Status:</span> <span id="statusDisplay">Idle</span></span>
+  </div>
+  <div id="hashMismatch" class="hash-mismatch"></div>
+</div>
+
+<div class="panel">
+  <div id="log">ready...\n</div>
+</div>
+
+<script>
+const CHUNK_SIZE = 1024 * 1024;     // 1MB
+const MAX_RETRIES = 5;
+const SERVER_URL = "http://localhost:3000";
+
+// ─── LOGGING ─────────────────────────────────────────────────────────────────
+
+function log(msg) {
+  const el = document.getElementById("log");
+  const ts = new Date().toISOString().substring(11, 19);
+  el.textContent += `[${ts}] ${msg}\n`;
+  el.scrollTop = el.scrollHeight;
+}
+
+function logError(msg) {
+  log(`❌ ERROR: ${msg}`);
+  const mismatch = document.getElementById("hashMismatch");
+  mismatch.textContent = msg;
+  mismatch.style.display = "block";
+}
+
+// ─── COMPRESSION ─────────────────────────────────────────────────────────────
+
+async function compressChunk(data) {
+  return new Promise((resolve, reject) => {
+    zlib.deflateRaw(data, (err, buffer) => {
+      if (err) reject(err);
+      else resolve(buffer);
+    });
+  });
+}
+
+// ─── HASHING ─────────────────────────────────────────────────────────────────
+
+async function sha256(data) {
+  const hashBuffer = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+// ─── CHUNK PROCESSING ─────────────────────────────────────────────────────────
+
+async function processChunk(block, index) {
+  const originalSize = block.byteLength;
+
+  // Compress
+  const compressed = await compressChunk(Buffer.from(block));
+
+  // Hash the ORIGINAL (uncompressed) data for verification
+  const hash = await sha256(block);
+
+  // Convert compressed back to ArrayBuffer for fetch
+  const arrayBuf = compressed.buffer.slice(compressed.byteOffset, compressed.byteOffset + compressed.byteLength);
+  const shouldSendCompressed = compressed.length < originalSize;
+
+  return {
+    body: shouldSendCompressed ? arrayBuf : block,
+    hash,
+    originalSize,
+    compressed: shouldSendCompressed && compressed.length < originalSize,
+    compressedSize: compressed.length,
+    ratio: (1 - compressed.length / originalSize).toFixed(2)
+  };
+}
+
+// ─── UPLOAD ───────────────────────────────────────────────────────────────────
+
+let abortController = null;
+let totalRetries = 0;
+let bytesUploaded = 0;
+let uploadStartTime = null;
+let speedInterval = null;
+
+async function uploadChunk(body, index, hash, fileId, originalSize, compressed) {
+  const controller = new AbortController();
+  abortController = controller;
+
+  for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
+    try {
+      const response = await fetch(`${SERVER_URL}/upload`, {
+        method: "POST",
+        headers: {
+          "x-file-id": fileId,
+          "x-chunk-index": String(index),
+          "x-hash": hash,
+          "x-compressed": String(compressed),
+          "x-original-size": String(originalSize),
+          "Content-Type": "application/octet-stream"
+        },
+        body,
+        signal: controller.signal
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({ error: response.statusText }));
+        throw new Error(`HTTP ${response.status}: ${err.error || err.detail || "Unknown error"}`);
+      }
+
+      const result = await response.json();
+      return result;
+    } catch (err) {
+      if (err.name === "AbortError") throw new Error("Upload cancelled");
+      totalRetries++;
+      if (attempt < MAX_RETRIES) {
+        log(`Chunk ${index} retry ${attempt}/${MAX_RETRIES} — ${err.message}`);
+        await sleep(Math.pow(2, attempt) * 200); // exponential backoff
+      } else {
+        throw err;
+      }
+    }
+  }
+}
+
+function sleep(ms) {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ─── MAIN ──────────────────────────────────────────────────────────────────────
+
+async function startUpload() {
+  const fileInput = document.getElementById("fileInput");
+  const file = fileInput.files[0];
+  if (!file) { log("No file selected"); return; }
+
+  document.getElementById("startBtn").disabled = true;
+  document.getElementById("cancelBtn").disabled = false;
+  document.getElementById("hashMismatch").style.display = "none";
+  log(`Starting: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+
+  const fileId = crypto.randomUUID();
+  log(`File ID: ${fileId}`);
+
+  // Check server health
+  try {
+    const health = await fetch(`${SERVER_URL}/health`).then(r => r.json());
+    log(`Server: OK (uptime ${Math.floor(health.uptime)}s)`);
+  } catch {
+    log("❌ Cannot reach COIL server — is it running?");
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("cancelBtn").disabled = true;
+    return;
+  }
+
+  // Check for existing upload to resume
+  try {
+    const statusRes = await fetch(`${SERVER_URL}/status/${fileId}`);
+    const status = await statusRes.json();
+    if (status.status === "in_progress" && status.receivedChunks.length > 0) {
+      log(`📦 Found existing upload — ${status.receivedChunks.length} chunks already uploaded`);
+    }
+  } catch {
+    // No prior upload — cold start
+  }
+
+  const buffer = await file.arrayBuffer();
+  const totalChunks = Math.ceil(buffer.byteLength / CHUNK_SIZE);
+  bytesUploaded = 0;
+  uploadStartTime = Date.now();
+  totalRetries = 0;
+
+  // Speed meter
+  speedInterval = setInterval(() => {
+    const elapsed = (Date.now() - uploadStartTime) / 1000;
+    const mbps = (bytesUploaded / 1024 / 1024 / elapsed).toFixed(2);
+    document.getElementById("speedDisplay").textContent = `${mbps} MB/s`;
+  }, 1000);
+
+  const uploadPromises = [];
+  let activeUploads = 0;
+  const MAX_CONCURRENT = 4;
+
+  for (let i = 0; i < totalChunks; i++) {
+    const start = i * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, buffer.byteLength);
+    const block = buffer.slice(start, end);
+
+    // Process + compress + hash locally first
+    const processed = await processChunk(block, i);
+    log(`Chunk ${i} | hash:${processed.hash.substring(0, 8)}… | compress:${processed.compressed ? processed.ratio : "off"} | ${processed.originalSize} bytes`);
+
+    const p = (async () => {
+      while (activeUploads >= MAX_CONCURRENT) {
+        await sleep(100);
+      }
+      activeUploads++;
+      try {
+        await uploadChunk(
+          processed.body,
+          i,
+          processed.hash,
+          fileId,
+          processed.originalSize,
+          processed.compressed
+        );
+        bytesUploaded += processed.originalSize;
+        document.getElementById("chunkCount").textContent = i + 1;
+        updateProgress(((i + 1) / totalChunks) * 100);
+      } finally {
+        activeUploads--;
+      }
+    })();
+    uploadPromises.push(p);
+
+    // throttle to MAX_CONCURRENT
+    if (activeUploads >= MAX_CONCURRENT) {
+      await sleep(100);
+    }
+  }
+
+  try {
+    await Promise.all(uploadPromises);
+    log("All chunks sent — finalizing...");
+
+    const finalizeRes = await fetch(`${SERVER_URL}/complete`, {
+      method: "POST",
+      headers: {
+        "x-file-id": fileId,
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        originalName: file.name,
+        originalExt: path.extname(file.name),
+        totalExpected: totalChunks
+      })
+    });
+
+    const result = await finalizeRes.json();
+    if (finalizeRes.ok) {
+      log(`🎉 Complete! Final SHA-256: ${result.finalHash.substring(0, 16)}…`);
+      log(`   Chunks reconstructed: ${result.chunksReconstructed}`);
+      document.getElementById("statusDisplay").textContent = "Done";
+      updateProgress(100);
+    } else {
+      logError(`Finalize failed: ${JSON.stringify(result)}`);
+    }
+  } catch (err) {
+    logError(`Upload failed: ${err.message}`);
+  } finally {
+    clearInterval(speedInterval);
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("cancelBtn").disabled = true;
+  }
+}
+
+function cancelUpload() {
+  if (abortController) {
+    abortController.abort();
+    log("Upload cancelled by user");
+    clearInterval(speedInterval);
+    document.getElementById("startBtn").disabled = false;
+    document.getElementById("cancelBtn").disabled = true;
+  }
+}
+
+function updateProgress(pct) {
+  document.getElementById("bar").style.width = `${pct}%`;
+  document.getElementById("statusDisplay").textContent = `${Math.floor(pct)}%`;
+}
+</script>
+</body>
+</html>

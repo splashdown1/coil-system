@@ -1,0 +1,14 @@
+{
+  "name": "speculative-watch",
+  "description": "Top-40 speculative equities ranked by Pattern Escalation (Bullish Override) score. Previous-day data refreshed twice daily.",
+  "version": "1.0.0",
+  "license": "CC0-1.0",
+  "resources": [
+    {
+      "path": "data/data.duckdb",
+      "name": "speculative_daily",
+      "type": "table",
+      "format": "duckdb"
+    }
+  ]
+}

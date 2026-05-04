@@ -1,0 +1,74 @@
+{
+  "protocol": "COIL SYNC PROTOCOL™",
+  "version": "1.0.0",
+  "core_philosophy": {
+    "principle": "Move only what changed. Rebuild exactly what's needed.",
+    "efficiency_goal": "~95% data reduction"
+  },
+  "pipeline_stages": [
+    {
+      "step": 1,
+      "process": "Change Detection",
+      "method": "Compare original data vs last synced version"
+    },
+    {
+      "step": 2,
+      "process": "Chunking",
+      "example_size": "1MB per chunk",
+      "total_chunks_example": 56
+    },
+    {
+      "step": 3,
+      "process": "Delta Encoding",
+      "logic": "Keep only changed chunks",
+      "example_skipped_ratio": "8 changed / 48 unchanged"
+    },
+    {
+      "step": 4,
+      "process": "Compression",
+      "algorithm": "Zstd",
+      "compression_ratio": "~70%",
+      "size_reduction_example": "50MB -> 2.4MB"
+    },
+    {
+      "step": 5,
+      "process": "Transfer",
+      "protocol": "HTTPS Chunked Upload",
+      "feature": "Auto-retry on fail"
+    },
+    {
+      "step": 6,
+      "process": "Verification",
+      "method": "SHA-256 Hashing",
+      "goal": "Validate integrity per chunk"
+    },
+    {
+      "step": 7,
+      "process": "Reconstruction",
+      "action": "Decompress, reorder, and rebuild original state"
+    },
+    {
+      "step": 8,
+      "process": "Commit & Store",
+      "action": "Update local version map and storage"
+    }
+  ],
+  "frame_structure_spec": {
+    "header_fields": [
+      { "field": "MAGIC", "size": "4 bytes", "description": "COIL Identifier" },
+      { "field": "VERSION", "size": "2 bytes", "description": "Protocol Version" },
+      { "field": "CHUNK_ID", "size": "4 bytes", "description": "Unique Chunk Index" },
+      { "field": "FLAGS", "size": "1 byte", "description": "Status (Delta, Compressed, Last)" },
+      { "field": "HASH", "size": "32 bytes", "description": "SHA-256 of original chunk" },
+      { "field": "SIZE", "size": "4 bytes", "description": "Compressed size" },
+      { "field": "PAYLOAD", "size": "N bytes", "description": "Compressed chunk data" }
+    ]
+  },
+  "key_benefits": [
+    "80-95% Less Bandwidth",
+    "Drastically Fewer Failures",
+    "Resume Anywhere",
+    "Verifiable Integrity",
+    "Scales to Any Data Size"
+  ]
+}

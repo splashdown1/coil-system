@@ -1,0 +1,47 @@
+{
+  "dashboardTitle": "Splashdown Trading Signals",
+  "subtitle": "Powered by Solar Patterns & Ancient Wisdom · v2.0",
+  "missionMode": "Long-Term Continuous Mission: April 26, 2026 → December 31, 2060",
+  "disclaimer": "Educational/entertainment purposes only. Not financial advice.",
+
+  "tabs": {
+    "PENNY STARTERS": {
+      "status": "LOADED",
+      "stocks": [
+        {"ticker": "MAPS", "name": "WM Technology", "price": "0.37", "rating": "★★★★★★"},
+        {"ticker": "LX", "name": "LexinFintech", "price": "2.30", "rating": "★★★★★★"},
+        {"ticker": "FINV", "name": "FinVolution", "price": "4.81", "rating": "Consistent"},
+        {"ticker": "III", "name": "Information Services", "price": "3.11", "rating": "★★★★★★"},
+        {"ticker": "NAGE", "name": "Niagen Bioscience", "price": "4.93", "rating": "High Health"}
+      ]
+    },
+    "SOLAR": {
+      "title": "SOLAR X-RAY FLUX — LIVE STATUS",
+      "activeMetrics": ["X", "M", "C", "B", "A"],
+      "fallbackNote": "Using NOAA SWPC real-time feed."
+    },
+    "WISDOM OF SOLOMON": {
+      "verses": [
+        "Proverbs 15:22: Without counsel plans fail...",
+        "Ecclesiastes 11:2: Divide your portion to seven...",
+        "Proverbs 10:4: The hand of the diligent makes rich."
+      ],
+      "principles": ["Diversify", "Stay Patient", "Avoid FOMO"]
+    },
+    "MISSION LOG": {
+      "entryWindow": "OPEN: April 26, 2026 → Dec 31, 2060",
+      "vixGate": "Current: 18.7 (Gate: < 20.91)",
+      "qqqSupport": "$599.49"
+    },
+    "CHART": {
+      "defaultTicker": "QQQ",
+      "loadingStrategy": "Lazy-load / Manual refresh"
+    }
+  },
+
+  "uiEnhancements": {
+    "layout": "Tabbed Navigation",
+    "theme": "Dark Mode",
+    "autoRefresh": "Enabled (10m)"
+  }
+}

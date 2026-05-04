@@ -1,0 +1,19 @@
+{
+  "position_open": true,
+  "entry_vix": 18.7,
+  "entry_qqq": 663.88,
+  "status": "BUY_SIGNAL_ACTIVE",
+  "entry_date": "",
+  "alerts": [],
+  "trade_log": [],
+  "position_closed": false,
+  "partner_override": null,
+  "last_market": {},
+  "last_goes_flux": null,
+  "last_vix": 18.83,
+  "last_qqq": 662.212,
+  "last_solar_flux": 1e-05,
+  "solar_source": "SolarMonitor.org",
+  "screenshot_flux": 1e-05,
+  "screenshot_source": "SolarMonitor.org"
+}

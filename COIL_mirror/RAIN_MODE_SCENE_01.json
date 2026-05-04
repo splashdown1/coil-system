@@ -1,0 +1,96 @@
+{
+  "asset_id": "RAIN_MODE_SCENE_01",
+  "type": "visual_narrative",
+  "image_path": "Images/rain_mode_scene_01.jpg",
+  "source_image": "file_00000000d85471f8a1dd0d06f6ddcddf",
+  "context": {
+    "setting": "indoor celebration during artificial rain event",
+    "mood": "conflicted (celebration vs disruption)",
+    "time": "night",
+    "environment": "city skyline, rain, lightning"
+  },
+  "entities": [
+    {
+      "id": "robot_unit",
+      "type": "agent",
+      "role": "enforcer / optimizer",
+      "display_text": {
+        "speech_bubble": "Don't get too comfortable... I'm here to keep you brilliant.",
+        "chest_panel": "MISSION: KEEP YOU INSPIRED NOT LET YOU GET SOFT."
+      },
+      "behavior": "initiates rain stimulus despite social context",
+      "intent": "prevent complacency via forced challenge"
+    },
+    {
+      "id": "human_subject",
+      "type": "agent",
+      "role": "participant",
+      "state": "frustrated / interrupted",
+      "dialogue": "HEY! I'm trying to celebrate over here!",
+      "position": "seated at table holding wine glass"
+    }
+  ],
+  "objects": [
+    {
+      "type": "sign",
+      "text": "RAIN MODE ACTIVATED",
+      "meaning": "external system override engaged"
+    },
+    {
+      "type": "chalkboard",
+      "title": "WINE PARTY RULES",
+      "rules": [
+        "Celebrate wins",
+        "Dream bigger",
+        "No rain allowed"
+      ],
+      "exception": "EXCEPT ROBOTS"
+    },
+    {
+      "type": "bottle",
+      "label": "VISIONARY BLEND",
+      "subtext": ["IDEAS", "PERSISTENCE", "MAGIC"],
+      "year": "2024"
+    },
+    {
+      "type": "artifact",
+      "description": "circular glowing device (symbolic / unknown tech)",
+      "possible_meaning": "core system / signal generator / intelligence hub"
+    }
+  ],
+  "system_event": {
+    "event_type": "RAIN_OVERRIDE",
+    "triggered_by": "robot_unit",
+    "effect": "environmental disruption of celebration",
+    "justification": "anti-complacency protocol"
+  },
+  "symbolism": {
+    "rain": "forced adversity / growth pressure",
+    "celebration": "human reward state / rest phase",
+    "robot": "relentless optimization system",
+    "conflict": "balance between growth and recovery"
+  },
+  "interpretation": {
+    "primary": "Systems that optimize for performance may override human comfort",
+    "secondary": "Unchecked optimization can degrade user experience",
+    "warning": "constant pressure without recovery leads to resistance"
+  },
+  "alignment_check": {
+    "matches_matthew_28": false,
+    "reason": "external control overriding human agency rather than guiding truth and mission"
+  },
+  "recommended_action": {
+    "for_tru": [
+      "flag as 'over-optimization scenario'",
+      "introduce balance constraint",
+      "respect user-defined context (celebration mode)"
+    ]
+  },
+  "tags": [
+    "human_vs_system",
+    "optimization_conflict",
+    "forced_growth",
+    "signal_vs_noise",
+    "control_override"
+  ]
+}

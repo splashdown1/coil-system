@@ -1,0 +1,15 @@
+{
+  "position_open": true,
+  "entry_qqq": 663.8800048828125,
+  "entry_vix": 18.709999084472656,
+  "entry_date": "2026-04-26T04:27:02.546666+00:00",
+  "alerts": [],
+  "trade_log": [],
+  "position_closed": false,
+  "last_market": {
+    "qqq": 663.8800048828125,
+    "vix": 18.709999084472656
+  },
+  "partner_override": null,
+  "last_goes_flux": null
+}

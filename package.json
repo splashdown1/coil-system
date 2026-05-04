@@ -1,0 +1,12 @@
+{
+  "name": "coil-sync",
+  "version": "1.0.0",
+  "description": "COIL SYNC PROTOCOL™ — Delta + Zstd + SHA-256 chunk upload",
+  "main": "COIL_Server.js",
+  "scripts": {
+    "start": "node COIL_Server.js"
+  },
+  "dependencies": {
+    "express": "^4.22.1"
+  }
+}

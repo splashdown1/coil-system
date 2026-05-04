@@ -1,0 +1,31 @@
+{
+  "mission_config": {
+    "dashboard_id": "splashdown_v2.4",
+    "last_sync": "2026-04-27T09:08:00Z",
+    "status": "OPERATIONAL",
+    "data_feed_priority": ["FMP", "AlphaVantage", "TwelveData"]
+  },
+  "modules": {
+    "top_10_penny_stocks_projected": [
+      {"symbol": "BITF", "name": "Bitfarms Ltd.", "sector": "Crypto Mining", "projected_upside": "High", "current_price": 1.99},
+      {"symbol": "ARBK", "name": "Argo Blockchain", "sector": "Crypto Mining", "projected_upside": "Volatile", "current_price": 2.92},
+      {"symbol": "URJA", "name": "Urja Global Ltd.", "sector": "EV Infrastructure", "projected_upside": "Growth", "current_price": 0.11},
+      {"symbol": "CGTX", "name": "Cognition Therapeutics", "sector": "Biotech", "projected_upside": "Target +1000%", "current_price": 0.86},
+      {"symbol": "STIM", "name": "Neuronetics, Inc.", "sector": "MedTech", "projected_upside": "Steady", "current_price": 1.38},
+      {"symbol": "GAU", "name": "Galiano Gold Inc.", "sector": "Mining", "projected_upside": "Commodity Play", "current_price": 2.65},
+      {"symbol": "DTST", "name": "Data Storage Corp", "sector": "Cloud Services", "projected_upside": "Niche Growth", "current_price": 4.07},
+      {"symbol": "XPON", "name": "Expion360 Inc.", "sector": "Energy Storage", "projected_upside": "Speculative", "current_price": 0.69},
+      {"symbol": "MAPS", "name": "WM Technology", "sector": "Technology", "projected_upside": "Recovery", "current_price": 0.38},
+      {"symbol": "RCKT", "name": "Rocket Pharmaceuticals", "sector": "Biotech", "projected_upside": "High Potency", "current_price": 3.49}
+    ],
+    "top_growth_stocks_projected": [
+      {"symbol": "NVDA", "name": "NVIDIA", "implied_upside": "24%", "target_2026": "258.00"},
+      {"symbol": "PLTR", "name": "Palantir", "implied_upside": "39%", "target_2026": "45.00"},
+      {"symbol": "META", "name": "Meta Platforms", "implied_upside": "20%", "target_2026": "810.00"},
+      {"symbol": "LLY", "name": "Eli Lilly", "implied_upside": "33%", "target_2026": "950.00"},
+      {"symbol": "WFC", "name": "Wells Fargo", "implied_upside": "44%", "target_2026": "82.00"},
+      {"symbol": "NOW", "name": "ServiceNow", "implied_upside": "101%", "target_2026": "179.26"},
+      {"symbol": "AXON", "name": "Axon Enterprise", "implied_upside": "100%", "target_2026": "717.68"}
+    ]
+  }
+}

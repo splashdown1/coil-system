@@ -1,0 +1,8 @@
+{
+  "timestamp": "2026-04-26T14:51:03.234066+00:00",
+  "event": "M_CLASS_FLARE_ACTIVE",
+  "signal": "BUY_SIGNAL_ACTIVE",
+  "vix": 18.7,
+  "qqq": 663.88,
+  "status": "LONG_POSITION_OPEN"
+}

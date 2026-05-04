@@ -1,0 +1,9 @@
+{
+  "filename": "ABSORBED_TRADES_MANIFEST.md",
+  "total_orbs_absorbed": 12,
+  "total_profit_secured": 0.6999,
+  "slippage_avg": 3.483,
+  "ghost_stop_count": 0,
+  "bot_active_status": "TRUE",
+  "spawn_rate": "1_per_3_seconds"
+}

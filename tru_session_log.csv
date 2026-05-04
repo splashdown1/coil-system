@@ -1,0 +1,5 @@
+timestamp,token_address,action,price,pulse_score,rug_check_passed,pnl_pct,win_streak,is_active,event
+2026-04-27T22:56:31.458689,Example123...,BUY,0.00234,7200,True,0.0,0,True,
+2026-04-27T22:57:06.510460,Example123...,BUY,0.00234,7200,True,0.0,0,True,
+2026-04-27T22:57:06.510744,,,,,,,1,True,WIN
+2026-04-27T23:00:57.459242,,,,,,,0,True,COOLDOWN_STARTED,60

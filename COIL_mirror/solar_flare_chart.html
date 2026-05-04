@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Solar Flare Projection — Pattern Escalation</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-financial@0.2.1/dist/chartjs-chart-financial.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #0d1117;
+      color: #e6edf3;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      padding: 24px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    .header h1 {
+      font-size: 20px;
+      font-weight: 600;
+      color: #f0f6fc;
+    }
+    .header .meta {
+      font-size: 13px;
+      color: #7d8590;
+    }
+    .legend {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-bottom: 20px;
+      font-size: 13px;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .legend-dot {
+      width: 12px;
+      height: 3px;
+      border-radius: 2px;
+    }
+    .legend-dot.historical { background: #58a6ff; }
+    .legend-dot.bullish { background: #f78166; }
+    .legend-dot.goes { background: #7ee787; }
+    .legend-dot.threshold { background: #6e7681; border: 1px dashed #484f58; }
+    .chart-container {
+      position: relative;
+      height: 520px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    canvas { width: 100% !important; height: 100% !important; }
+    .class-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 11px;
+      color: #484f58;
+      margin-top: 6px;
+      padding: 0 4px;
+    }
+    .callout {
+      margin-top: 16px;
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 16px;
+      font-size: 13px;
+    }
+    .callout h3 {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f78166;
+      margin-bottom: 8px;
+    }
+    .callout p { color: #7d8590; line-height: 1.6; }
+    .callout strong { color: #e6edf3; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div>
+      <h1>GOES X-Ray Flux — Pattern Escalation Projection</h1>
+      <div class="meta">GOES-19 1-min data &bull; Bullish Override model &bull; Log scale</div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-dot historical"></div>GOES Historical (Apr 19–26)</div>
+    <div class="legend-item"><div class="legend-dot bullish"></div>Bullish Override projection (Apr 27–29)</div>
+    <div class="legend-item"><div class="legend-dot goes"></div>GOES Linear baseline</div>
+    <div class="legend-item"><div class="legend-dot threshold"></div>Flare class thresholds</div>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="flareChart"></canvas>
+  </div>
+  <div class="class-labels">
+    <span>A</span><span>B</span><span>C</span><span>M</span><span>X</span>
+  </div>
+
+  <div class="callout">
+    <h3>Bullish Override signals</h3>
+    <p>
+      <strong>Apr 22:</strong> Rapid A→C escalation in 6 days (vs typical 10–14 day ramp).<br>
+      <strong>Apr 24–25:</strong> M-class peak with multiple M-level surges.<br>
+      <strong>Apr 26:</strong> Post-peak C-shelf return — energy not fully discharged.<br>
+      <strong>Projection:</strong> Re-escalation via C-shelf → M → X within 48 hr.
+    </p>
+  </div>
+
+  <script>
+    (async function() {
+      const res = await fetch('./solar_flare_projection.json');
+      const data = await res.json();
+
+      const ctx = document.getElementById('flareChart').getContext('2d');
+
+      const thresholds = [
+        { label: 'A', value: 1e-8 },
+        { label: 'B', value: 1e-7 },
+        { label: 'C', value: 1e-6 },
+        { label: 'M', value: 1e-5 },
+        { label: 'X', value: 1e-4 },
+      ];
+
+      const thresholdAnnotations = {};
+      thresholds.forEach(t => {
+        thresholdAnnotations[t.label] = {
+          line: t.value,
+          label: t.label,
+          color: 'rgba(110, 118, 129, 0.4)',
+          lineColor: 'rgba(110, 118, 129, 0.3)',
+        };
+      });
+
+      // Historical
+      const histLabels = data.historical.map(d => {
+        const dt = new Date(d.datetime);
+        return dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+      });
+      const histFlux = data.historical.map(d => d.flux);
+
+      // Projected
+      const projLabels = [
+        ...data.projected.map(d => {
+          const dt = new Date(d.datetime);
+          return dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+        }),
+        ...data.goes_linear_baseline.slice(1).map(d => {
+          const dt = new Date(d.datetime);
+          return dt.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'UTC' });
+        })
+      ];
+
+      // Merge projected + goes baseline into single time axis
+      const allLabels = [...new Set([...histLabels, ...projLabels])].sort((a, b) => {
+        return new Date(a) - new Date(b);
+      });
+
+      function findFluxAt(label, points) {
+        const target = new Date(label);
+        for (const p of points) {
+          const dp = new Date(p.datetime);
+          if (dp.getTime() === target.getTime()) return p.flux;
+        }
+        return null;
+      }
+
+      function buildSeries(points) {
+        return allLabels.map(label => {
+          const val = findFluxAt(label, points);
+          return val;
+        });
+      }
+
+      const histSeries = buildSeries(data.historical);
+      const projSeries = buildSeries(data.projected);
+      const goesSeries = buildSeries(data.goes_linear_baseline);
+
+      const isProjected = allLabels.map(label => new Date(label) >= new Date('2026-04-27'));
+      const isHistorical = allLabels.map(label => new Date(label) <= new Date('2026-04-26T23Z'));
+
+      new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: allLabels,
+          datasets: [
+            {
+              label: 'GOES Historical',
+              data: histSeries,
+              borderColor: '#58a6ff',
+              backgroundColor: 'rgba(88, 166, 255, 0.08)',
+              borderWidth: 2,
+              pointRadius: 0,
+              pointHoverRadius: 4,
+              tension: 0.3,
+              fill: true,
+              borderJoinStyle: 'round',
+            },
+            {
+              label: 'Bullish Override',
+              data: projSeries,
+              borderColor: '#f78166',
+              backgroundColor: 'rgba(247, 129, 102, 0.08)',
+              borderWidth: 2.5,
+              borderDash: [6, 3],
+              pointRadius: 4,
+              pointHoverRadius: 6,
+              pointBackgroundColor: '#f78166',
+              tension: 0.3,
+              fill: false,
+              borderJoinStyle: 'round',
+            },
+            {
+              label: 'GOES Linear',
+              data: goesSeries,
+              borderColor: '#7ee787',
+              backgroundColor: 'rgba(126, 231, 135, 0.05)',
+              borderWidth: 1.5,
+              borderDash: [3, 5],
+              pointRadius: 0,
+              tension: 0.3,
+              fill: false,
+              borderJoinStyle: 'round',
+            },
+          ],
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { intersect: false, mode: 'index' },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: '#21262d',
+              borderColor: '#30363d',
+              borderWidth: 1,
+              titleColor: '#f0f6fc',
+              bodyColor: '#7d8590',
+              padding: 12,
+              callbacks: {
+                label(ctx) {
+                  const val = ctx.parsed.y;
+                  if (val === null) return null;
+                  const exp = Math.log10(val).toFixed(1);
+                  let cls = 'A';
+                  if (val >= 1e-4) cls = 'X';
+                  else if (val >= 1e-5) cls = 'M';
+                  else if (val >= 1e-6) cls = 'C';
+                  else if (val >= 1e-7) cls = 'B';
+                  return `${ctx.dataset.label}: ${val.toExponential(1)} W·m⁻² (${cls})`;
+                }
+              }
+            },
+          },
+          scales: {
+            x: {
+              grid: { color: 'rgba(48, 54, 61, 0.6)', drawBorder: false },
+              ticks: {
+                color: '#7d8590',
+                font: { size: 11 },
+                maxRotation: 0,
+                maxTicksLimit: 16,
+              },
+            },
+            y: {
+              type: 'logarithmic',
+              position: 'left',
+              grid: { color: 'rgba(48, 54, 61, 0.6)', drawBorder: false },
+              ticks: {
+                color: '#7d8590',
+                font: { size: 11 },
+                callback: val => val.toExponential(0),
+              },
+              min: 1e-9,
+              max: 2e-3,
+            },
+          },
+        },
+        plugins: [{
+          id: 'thresholdLines',
+          beforeDraw(chart) {
+            const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+            const thresholds = [
+              { label: 'A', value: 1e-8 },
+              { label: 'B', value: 1e-7 },
+              { label: 'C', value: 1e-6 },
+              { label: 'M', value: 1e-5 },
+              { label: 'X', value: 1e-4 },
+            ];
+            ctx.save();
+            thresholds.forEach(t => {
+              const yPos = y.getPixelForValue(t.value);
+              ctx.beginPath();
+              ctx.strokeStyle = 'rgba(110, 118, 129, 0.35)';
+              ctx.lineWidth = 1;
+              ctx.setLineDash([4, 4]);
+              ctx.moveTo(left, yPos);
+              ctx.lineTo(right, yPos);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = 'rgba(110, 118, 129, 0.6)';
+              ctx.font = 'bold 10px -apple-system, sans-serif';
+              ctx.textAlign = 'left';
+              ctx.fillText(t.label, left + 4, yPos - 4);
+            });
+            ctx.restore();
+          }
+        }, {
+          id: 'projectionShade',
+          beforeDraw(chart) {
+            const { ctx, chartArea: { left, right }, scales: { x } } = chart;
+            const cutoffDate = new Date('2026-04-27T00Z');
+            const cutoffX = x.getPixelForValue(cutoffDate);
+            if (cutoffX >= left && cutoffX <= right) {
+              ctx.save();
+              ctx.fillStyle = 'rgba(247, 129, 102, 0.03)';
+              ctx.fillRect(cutoffX, chartArea.top, right, chartArea.bottom - chartArea.top);
+              ctx.restore();
+            }
+          }
+        }],
+      });
+    })();
+  </script>
+</body>
+</html>

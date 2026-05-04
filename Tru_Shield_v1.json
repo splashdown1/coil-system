@@ -1,0 +1,47 @@
+{
+  "control_layer": "Tru_Shield_v1",
+  "parent_mission": "Moonshot_Sniper",
+  "logic_gate": {
+    "safety_checks": {
+      "rug_check_api": "enabled",
+      "min_liquidity_usd": 15000,
+      "max_creator_balance_pct": 5,
+      "required_status": ["mint_renounced", "liquidity_burned"]
+    },
+    "ghost_stop_protection": {
+      "stop_threshold_pct": -30,
+      "max_consecutive_stops": 2,
+      "consecutive_window_minutes": 10,
+      "action_on_trigger": "cooldown",
+      "cooldown_duration_minutes": 60
+    },
+    "dynamic_profit_lock": {
+      "activation_threshold": "3x",
+      "action": "secure_initial_capital",
+      "new_floor_buffer_pct": 10,
+      "note": "Locks initial investment + 10% profit as the new 'un-tradable' floor"
+    },
+    "slippage_audit": {
+      "max_allowed_slippage_pct": 10,
+      "action_if_exceeded": "flag_high_volatility_warning",
+      "log_delta": true
+    }
+  },
+  "circuit_breakers": {
+    "daily_drawdown_limit_pct": 15,
+    "max_trades_per_hour": 5,
+    "emergency_halt": "manual_or_api_trigger"
+  },
+  "evidence_logging": {
+    "format": "COIL_CSV_v2",
+    "required_fields": [
+      "timestamp",
+      "token_address",
+      "entry_price",
+      "exit_price",
+      "slippage_delta",
+      "block_reason",
+      "final_pnl_usd"
+    ]
+  }
+}

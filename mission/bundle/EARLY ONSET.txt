@@ -1,0 +1,6 @@
+FLAGGED: 2026-04-26T05:05:14.064262+00:00 UTC
+Status: EARLY_ONSET_DETECTED
+Source: TRU (AI-side agent)
+Condition: Pre-April-28 monitoring active
+Notes: GOES SWPC feed is DOWN. Using SVC_DOWN markers.
+Action: WINDOW_SHIFTED — Launchpad logic accelerated.

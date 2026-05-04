@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>COIL Uploader v2</title>
+  <style>
+    body { font-family: Arial; background:#111; color:#0f0; padding:20px; }
+    #log { height:200px; overflow:auto; border:1px solid #0f0; padding:10px; }
+    #progress { width:100%; background:#333; margin-top:10px; }
+    #bar { width:0%; height:20px; background:#0f0; }
+  </style>
+</head>
+<body>
+<h2>COIL Upload v2 (Delta + Resume)</h2>
+<input type="file" id="fileInput" />
+<button onclick="startUpload()">Start Upload</button>
+<div id="progress"><div id="bar"></div></div>
+<div id="log"></div>
+<script>
+const CHUNK_SIZE = 1024 * 1024; // 1MB
+const MAX_RETRIES = 3;
+
+function log(msg) {
+  const el = document.getElementById("log");
+  el.textContent += msg + "\n";
+  el.scrollTop = el.scrollHeight;
+}
+
+function updateProgress(percent) {
+  document.getElementById("bar").style.width = percent + "%";
+}
+
+// simple hash (for delta detection)
+async function hashChunk(chunk) {
+  const buffer = await chunk.arrayBuffer();
+  const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map(b => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+async function uploadChunk(chunk, index, hash, fileId) {
+  return fetch("http://localhost:3000/upload", {
+    method: "POST",
+    headers: {
+      "x-file-id": fileId,
+      "x-chunk-index": index,
+      "x-hash": hash
+    },
+    body: chunk
+  });
+}
+
+async function uploadWithRetry(chunk, index, hash, fileId) {
+  for (let i = 1; i <= MAX_RETRIES; i++) {
+    try {
+      log(`Chunk ${index} attempt ${i}`);
+      await uploadChunk(chunk, index, hash, fileId);
+      log(`Chunk ${index} ✅`);
+      return true;
+    } catch {
+      log(`Chunk ${index} ❌ retrying`);
+      if (i === MAX_RETRIES) throw new Error("Failed chunk " + index);
+    }
+  }
+}
+
+async function startUpload() {
+  const file = document.getElementById("fileInput").files[0];
+  if (!file) return alert("Select file");
+  const fileId = file.name + "_" + file.size;
+  const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
+  let uploadedMap = JSON.parse(localStorage.getItem(fileId) || "{}");
+  log("Starting upload...");
+  log("Chunks: " + totalChunks);
+  for (let i = 0; i < totalChunks; i++) {
+    if (uploadedMap[i]) {
+      log(`Chunk ${i} ⏭ skipped (already uploaded)`);
+      continue;
+    }
+    const start = i * CHUNK_SIZE;
+    const chunk = file.slice(start, start + CHUNK_SIZE);
+    const hash = await hashChunk(chunk);
+    try {
+      await uploadWithRetry(chunk, i, hash, fileId);
+      uploadedMap[i] = true;
+      localStorage.setItem(fileId, JSON.stringify(uploadedMap));
+    } catch (err) {
+      log(err.message);
+      return;
+    }
+    updateProgress(Math.floor((Object.keys(uploadedMap).length / totalChunks) * 100));
+  }
+  // finalize
+  await fetch("http://localhost:3000/complete", {
+    method: "POST",
+    headers: { "x-file-id": fileId }
+  });
+  localStorage.removeItem(fileId);
+  log("🎉 Upload complete!");
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,16 @@
+{
+  "generated_at": "2026-04-27T23:03:49.155804",
+  "optimizer_version": "Tru_Optimizer_v1",
+  "total_trades": 5,
+  "metrics": {
+    "avg_slippage": 3.3,
+    "profit_vs_slippage_ratio": 0.45,
+    "execution_delay_ms": 140.0
+  },
+  "filters_active": 3,
+  "social_validation": null,
+  "recommendations": [
+    "REVIEW_FEE_STRUCTURE",
+    "ENABLE_X_API_FOR_SOCIAL_BOOST"
+  ]
+}

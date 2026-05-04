@@ -1,0 +1,14 @@
+Solar-Market Signal: Public Disclosure v1.0
+
+What is this?
+This is a data-driven "weather forecast" for the financial markets based on solar activity.
+
+The Core Theory:
+Major solar flares (X-class) don't just affect satellites; they can influence human mood and market volatility.
+- The "C-Shelf" Plateau: Steady energy often precedes a major breakout.
+- The "Relief" Pattern: Once a flare occurs, market fear (VIX) often drops.
+
+Target Window: April 28-29, 2026.
+Primary Signal: LONG QQQ / SHORT VIX on flare onset.
+
+Disclaimer: Not Financial Advice. Experimental model.

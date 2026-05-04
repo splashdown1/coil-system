@@ -1,0 +1,9 @@
+{
+  "qqq_entry": 663.88,
+  "vix_entry": 18.71,
+  "vix_abort_threshold": 2.2,
+  "vix_hard_limit": 20.68,
+  "flux_abort_threshold": 5e-05,
+  "status": "DEPLOYED",
+  "target_window": "April 28-29, 2026"
+}

@@ -1,0 +1,66 @@
+tables:
+  raw_daily:
+    description: >
+      Daily price/volume snapshot for the speculative ticker universe,
+      enriched with Pattern Escalation score (Bullish Override model).
+      One row per ticker per trading day.
+    columns:
+      ticker:
+        type: varchar
+        description: Stock ticker symbol
+      date:
+        type: varchar
+        description: Trading date (YYYY-MM-DD, previous business day)
+      close:
+        type: double
+        description: Adjusted closing price
+      open:
+        type: double
+        description: Opening price
+      high:
+        type: double
+        description: Intraday high
+      low:
+        type: double
+        description: Intraday low
+      volume:
+        type: bigint
+        description: Total shares traded
+      chg_1d:
+        type: double
+        description: 1-day percentage change (decimal, e.g. 0.05 = +5%)
+      high_5d:
+        type: double
+        description: 5-trading-day high
+      low_5d:
+        type: double
+        description: 5-trading-day low
+      vol_ratio:
+        type: double
+        description: Volume vs. 20-day average volume ratio
+      rsi_14:
+        type: double
+        description: 14-period Relative Strength Index
+      mkt_cap:
+        type: bigint
+        description: Market capitalisation in USD
+      pe:
+        type: double
+        description: Trailing P/E ratio
+      fwd_pe:
+        type: double
+        description: Forward P/E ratio
+      revenue:
+        type: bigint
+        description: Total annual revenue in USD
+      profit_margin:
+        type: double
+        description: Net profit margin (decimal)
+      score:
+        type: double
+        description: >
+          Pattern Escalation composite score (Bullish Override).
+          Range ~0–100+. Higher = stronger speculative signal.
+      tier:
+        type: varchar
+        description: Price tier based on previous-day close

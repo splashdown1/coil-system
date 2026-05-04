@@ -1,0 +1,5 @@
+timestamp,win_streak,is_active,event,entry,current,pnl_pct,delta_pct,ok,floor_sol,locked_at
+2026-04-27T23:00:45.221362,0,True,SLIPPAGE_CHECK,,,,6.667,True,,,0.003,0.0032,
+2026-04-27T23:00:57.459065,0,True,SLIPPAGE_CHECK,,,,6.667,True,,,0.003,0.0032,
+2026-04-27T23:00:57.459349,0,True,GHOST_STOP_TRIGGERED,0.003,0.0018,-40.0,,,,,,,
+2026-04-27T23:00:57.459432,0,True,PROFIT_LOCK_ACTIVATED,,,,,,0.11,2026-04-27T23:00:57.459431,,,

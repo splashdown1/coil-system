@@ -1,0 +1,31 @@
+COIL-SYNC/1.0
+
+Core:
+
+- Chunked transfer
+
+- Hash-based delta sync
+
+- Optional compression
+
+- Optional encryption
+
+- Resume via checkpointing
+
+Headers:
+
+x-file-id
+
+x-chunk-index
+
+x-hash
+
+x-version
+
+Endpoints:
+
+POST /upload
+
+POST /complete
+
+GET /status
