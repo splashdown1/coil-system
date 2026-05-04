@@ -1,7 +1,7 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "source": "LOGOS_ENGINE",
-  "last_verified": "2026-05-04T23:25:00Z",
+  "last_verified": "2026-05-04T23:35:00Z",
   "facts": [
     {
       "id": "base_001",
@@ -19,17 +19,19 @@
     },
     {
       "id": "base_003",
-      "fact": "zo.space Tru routes deployed on splashdown",
+      "fact": "26 zo.space routes deployed on splashdown (live state)",
       "status": "verified",
       "conf": 1.0,
-      "category": "infrastructure"
+      "category": "infrastructure",
+      "note": "Confirmed via list_space_routes. Backup (tru_routes_backup/) is stale — was incomplete at export time."
     },
     {
       "id": "base_004",
-      "fact": "COIL_UNBOUND pipeline in standby",
+      "fact": "COIL_UNBOUND: 6/7 artifacts complete, 1 in-progress (LOGOS_EXPANSION_001.bin — 12,715 of ~20,480 chunks)",
       "status": "verified",
-      "conf": 0.95,
-      "category": "project_state"
+      "conf": 1.0,
+      "category": "project_state",
+      "note": "Pipeline is active, not in standby. 135,595 total chunks confirmed. Source: live /api/status on 2026-05-04."
     },
     {
       "id": "base_005",
@@ -37,6 +39,21 @@
       "status": "verified",
       "conf": 1.0,
       "category": "identity"
+    },
+    {
+      "id": "base_006",
+      "fact": "COIL Red Line encryption: capability present in COIL_Server.js, no artifacts currently encrypted",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "security",
+      "note": "ciphertext-only mode exists but redline.active=false on live API."
+    },
+    {
+      "id": "base_007",
+      "fact": "COIL sync server online at coil-sync-server-splashdown.zocomputer.io, 135,595 chunks confirmed",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "infrastructure"
     }
   ]
 }
