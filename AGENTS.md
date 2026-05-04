@@ -37,3 +37,21 @@ TRU (Dry Truth, Steady Nudge) — resident AI for splashdown.zo.computer.
 | File | SHA256 | Size |
 |---|---|---|
 | LOGOS_EXPANSION_004.bin | `bee5e6ee480054b98a7c8c15221ea45adc59864e03fffcfe70ba8e2def6d600f` | 104,857,600 |
+
+## Tru Knowledge Bank
+**File:** `file 'Tru_Knowledge_Bank.json'` — persistent institutional memory for TRU
+- Loaded at tru-core startup via `logos_verify` layer
+- Contains verified_facts, anomalies_log, preferences, pipeline_state
+- Anomalies: ghost hash (VF-003), inotify loop (VF-004), header format mismatch (ANOM-003), /complete strip bug (ANOM-004)
+- All facts verified by LOGOS before storage — no speculation, no anecdote
+
+## Critical Pipeline Rules (proven by debug session)
+1. **Kill daemon before chip generation** — `coil-mirror-sync-daemon` modifies COIL_MASTER_CHIP.json → inotify loop → hash oscillation
+2. **Anchor to git HEAD** — if disk hash vs manifest hash disagree, restore from `git checkout HEAD -- COIL_MASTER_CHIP.json`
+3. **Never trust local log** — server response is the only source of truth
+4. **Header format must be `<4sH4s32sHH`** — GAP_VALUE=b'\x0f\x56\x41\x4a' at byte 6
+5. **Server /complete must STRIP=686** before concat — 46 header + 640 hash table per chunk
+
+## Active Anomalies (watch list)
+- LOGOS_EXPANSION_001: still in_progress (12,715/20,480 chunks) — monitor
+- TASK005 not showing in dashboard — manifest wiped during debug, server data intact
