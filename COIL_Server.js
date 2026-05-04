@@ -254,9 +254,13 @@ app.post("/complete", async (req, res) => {
 
   // Plaintext reassembly path (legacy)
   const buffers = [];
+  const SUPER_CHUNK_HEADER = 46;  // COIL super-chunk header size
+  const HASH_TABLE = 640;         // 20 × SHA-256 @ 32 bytes each
+  const STRIP = SUPER_CHUNK_HEADER + HASH_TABLE; // 686 bytes per chunk
   for (const idx of indices) {
     const chunkPath = path.join(UPLOAD_DIR, fileId, String(idx).padStart(8, "0"));
-    buffers.push(fs.readFileSync(chunkPath));
+    const chunk = fs.readFileSync(chunkPath);
+    buffers.push(chunk.slice(STRIP)); // strip header + hash table
   }
   const assembled = Buffer.concat(buffers);
   const isJSON = originalExt === "json";
