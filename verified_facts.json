@@ -1,7 +1,7 @@
 {
   "schema_version": "1.1",
   "source": "LOGOS_ENGINE",
-  "last_verified": "2026-05-04T23:35:00Z",
+  "last_verified": "2026-05-04T23:45:00Z",
   "facts": [
     {
       "id": "base_001",
@@ -54,6 +54,15 @@
       "status": "verified",
       "conf": 1.0,
       "category": "infrastructure"
+    },
+    {
+      "id": "base_008",
+      "fact": "COIL Red Line encrypt/decrypt cycle verified end-to-end on LOGOS_EXPANSION_003.bin (100MB). Round-trip SHA256: a30d23b39710208638f4feae41d37b463a0afe1cb30c6dad9e1c5fabbc99d614",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "security",
+      "note": "Encrypt then decrypt produces byte-for-byte identical output. Salt/IV/algorithm/checksum carried in base-64 metadata header.",
+      "verified_at": "2026-05-04T23:45:00Z"
     }
   ]
 }
