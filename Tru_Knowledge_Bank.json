@@ -1,6 +1,6 @@
 {
   "name": "Tru Knowledge Bank",
-  "version": "1.0",
+  "version": "1.01",
   "description": "TRU institutional memory — verified facts and system state",
   "metadata": {
     "created": "2026-05-04T16:00:00Z",
@@ -98,6 +98,14 @@
       "source": "zo_monitor",
       "timestamp": "2026-05-04T21:35:00Z",
       "verified": true
+    },
+    {
+      "id": "KB-1777931984982",
+      "timestamp": "2026-05-04T21:59:44.982Z",
+      "fact": "TRU v0.2.0 launched — confirmed artifact count: 7 complete, 164,548 total chunks. Logos verification layer active. BANK button flow confirmed.",
+      "category": "session",
+      "verified": false
     }
-  ]
+  ],
+  "last_updated": "2026-05-04T21:59:44.982Z"
 }
