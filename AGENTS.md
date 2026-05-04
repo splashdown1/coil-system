@@ -26,6 +26,13 @@ TRU (Dry Truth, Steady Nudge) — resident AI for splashdown.zo.computer.
 - Status: `GET http://localhost:3000/status/<file_id>`
 - Complete: `POST http://localhost:3000/complete`
 
+## Pipeline Recovery
+- Orphan threshold: manifests with ≤4 chunks and `in_progress` status are orphans → safe to delete
+- `POST /api/sync-reset` — wipes orphan manifests, verifies server health, logs task summary
+- Known orphans: `ALPHA-BACKTEST-1777174120`, `TASK010`, `TASK010_FIXED`, `TASK010_TEST`, `enc-test`, `tru-optim-report`, `COIL_MASTER_CHIP`
+- tru-core is supervised by zo/supervisord — if it restarts repeatedly, check `/dev/shm/tru-core_err.log` for module import errors
+- zo.space site: `splashdown.zo.space` | Routes: `/` (chat), `/timeline`, `/stocks`, `/api/status`, `/api/sync-reset`, `/api/tru-ask`, `/api/zo-ask`
+
 ## Verified Binaries
 | File | SHA256 | Size |
 |---|---|---|
