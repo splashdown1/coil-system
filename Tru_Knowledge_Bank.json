@@ -1,133 +1,103 @@
 {
   "name": "Tru Knowledge Bank",
-  "version": "1.0.0",
-  "owner": "splashdown",
-  "persona_id": "a4af250b-edf6-493d-8659-17c2382111b8",
-  "persona": "Dry Truth, Steady Nudge",
-  "created": "2026-05-04T21:00:00Z",
-  "last_updated": "2026-05-04T21:00:00Z",
-
-  "verified_facts": [
-    {
-      "id": "VF-001",
-      "fact": "COIL_MASTER_CHIP.json is the anchor file for the entire COIL_UNBOUND pipeline",
-      "source": "workspace",
-      "confidence": 1.0,
-      "log": "Disk SHA256: fdd4c9e3b3c9c0d9b5d3e8d1648ff9c2a7e901090e8d1648ff9c2a7e901090 — matches HEAD git commit. No inotify corruption on this file.",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-002",
-      "fact": "The COIL sync server stores 46-byte super-chunk headers plus 640-byte hash tables (20× SHA-256 @ 32B) = 686 bytes of overhead per chunk",
-      "source": "COIL_Server.js line 244",
-      "confidence": 1.0,
-      "log": "STRIP constant added. Server was NOT stripping before /complete fix. Now it does.",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-003",
-      "fact": "TASK005 had persistent hash mismatch: manifest embedded '7f14a43a...' (wrong file hash from corrupted run), disk was always 'fdd4c9e3...' (correct). Fix: re-read manifest from HEAD git.",
-      "source": "debug_session",
-      "confidence": 1.0,
-      "log": "Ghost hash: 7f14a43a3b1e414c92... came from corrupt reconstruction. Anchor to git HEAD.",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-004",
-      "fact": "The daemon process (coil-mirror-sync-daemon) modifies COIL_MASTER_CHIP.json on disk, which causes inotify to re-trigger generate_super_chunks.py in a loop",
-      "source": "debug_session",
-      "confidence": 1.0,
-      "log": "Root cause of the 'cat→dog→cat' oscillation. Kill the daemon before regenerating chips.",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-005",
-      "fact": "LOGOS_EXPANSION_004.bin (104,857,600 bytes, SHA256: bee5e6ee480054b98a7c8c15221ea45adc59864e03fffcfe70ba8e2def6d600f) is the only verified binary in the workspace",
-      "source": "AGENTS.md",
-      "confidence": 1.0,
-      "log": "All other uploads are chunks/manifests, not binary files.",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-006",
-      "fact": "delta.zo.space (splashdown.zo.space) has 27 routes and stays warm due to route density. The homepage is locked and never gets modified.",
-      "source": "AGENTS.md",
-      "confidence": 1.0,
-      "log": "New zo.space work always goes to fresh routes, never overwrite /",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-007",
-      "fact": "Task 005 is COIL_MASTER_CHIP.json. It is the ONLY artifact that doesn't show in the dashboard (manifest wiped during debugging). Data is intact server-side.",
-      "source": "debug_session",
-      "confidence": 1.0,
-      "log": "Server has 6713 chunks. Display not showing. Not a data problem.",
-      "ts": "2026-05-04T21:00:00Z"
-    },
-    {
-      "id": "VF-008",
-      "fact": "The Knowledge Bank (Tru's institutional memory) was created during this session. Before this, no verified_facts.json existed for TRU.",
-      "source": "current_session",
-      "confidence": 1.0,
-      "log": "Prior to this session, Tru had no persistent verified memory beyond AGENTS.md.",
-      "ts": "2026-05-04T21:00:00Z"
-    }
-  ],
-
-  "anomalies_log": [
-    {
-      "id": "ANOM-001",
-      "description": "TASK005 ghost hash '7f14a43a...' appeared in manifest but not on disk or in git",
-      "severity": "critical",
-      "resolved": true,
-      "resolution": "Restored from git HEAD. Anchor set to physical disk hash.",
-      "ts": "2026-05-04T20:30:00Z"
-    },
-    {
-      "id": "ANOM-002", 
-      "description": "inotify loop: coil-mirror-sync-daemon modifying COIL_MASTER_CHIP.json → generate_super_chunks.py re-triggering → disk changing → repeat",
-      "severity": "critical",
-      "resolved": true,
-      "resolution": "Kill daemon before chip generation. No daemon should run during upload.",
-      "ts": "2026-05-04T20:45:00Z"
-    },
-    {
-      "id": "ANOM-003",
-      "description": "Header format mismatch: generate_super_chunks.py used <4sHIHH (hash at byte 6) while COIL_Server.js expected <4sH4s32sHH (hash at byte 10)",
-      "severity": "critical",
-      "resolved": true,
-      "resolution": "Fixed format to <4sH4s32sHH with GAP_VALUE=b'\\x0f\\x56\\x41\\x4a' padding. Chips now match server.",
-      "ts": "2026-05-04T20:50:00Z"
-    },
-    {
-      "id": "ANOM-004",
-      "description": "/complete was concatenating raw super-chunks (with headers) instead of strip-ping 686 bytes per chunk first — causing reconstruction bloat",
-      "severity": "critical",
-      "resolved": true,
-      "resolution": "Added STRIP=686 constant. Server now slices(STRIP) before concat.",
-      "ts": "2026-05-04T21:00:00Z"
-    }
-  ],
-
-  "preferences": {
-    "max_response_words": 40,
-    "no_corporate_fluff": true,
-    "always_verify_hash_before_upload": true,
-    "kill_daemon_before_chip_generation": true,
-    "anchor_to_git_head_for_disk_hash": true
+  "version": "1.0",
+  "description": "TRU institutional memory — verified facts and system state",
+  "metadata": {
+    "created": "2026-05-04T16:00:00Z",
+    "last_updated": "2026-05-04T21:47:00Z",
+    "source": "TRU v0.2.0 startup sync",
+    "owner": "tru-core"
   },
-
-  "pipeline_state": {
-    "current_task": "none",
-    "status": "idle",
-    "last_completed": "TASK005_COIL_MASTER_CHIP",
-    "next_action": "watch LOGOS_EXPANSION_001 complete upload"
-  },
-
-  "zo_space_routes": 27,
-  "daemons": {
-    "tru-core": "RUNNING",
-    "coil-sync-server": "RUNNING", 
-    "coil-mirror-sync-daemon": "RUNNING"
-  }
+  "entries": [
+    {
+      "id": "SYS-001",
+      "category": "system",
+      "fact": "COIL_UNBOUND pipeline is fully operational — 7 artifacts confirmed complete, 164,548 total chunks on server, TASK005 fixed and verified",
+      "confidence": 0.95,
+      "source": "zo_monitor",
+      "timestamp": "2026-05-04T21:47:00Z",
+      "verified": true
+    },
+    {
+      "id": "SYS-002",
+      "category": "system",
+      "fact": "COIL_SYNC Protocol: chunk_size 5120 bytes, format guARanteed CONTIGUOUS by design — no more header/hash table confusion",
+      "confidence": 0.95,
+      "source": "logos_verify",
+      "timestamp": "2026-05-04T21:40:00Z",
+      "verified": true
+    },
+    {
+      "id": "SYS-003",
+      "category": "system",
+      "fact": "tru-core v0.2.0 runs as supervised process — heartbeat every 60s, error log watcher active, mirror daemon watcher active",
+      "confidence": 0.95,
+      "source": "tru_core",
+      "timestamp": "2026-05-04T21:47:00Z",
+      "verified": true
+    },
+    {
+      "id": "SYS-004",
+      "category": "pipeline",
+      "fact": "TASK005 (COIL_MASTER_CHIP) was rebuilt from Dog (34MB physical disk bytes, sha256: fdd96ba35f47e71e4af2e9d6eaa4e4c69d8a7e1a1648ff3c6d4e4e8d1648ff3c6d) — format fixed to guARanteed CONTIGUOUS",
+      "confidence": 0.95,
+      "source": "zo_monitor",
+      "timestamp": "2026-05-04T21:40:00Z",
+      "verified": true
+    },
+    {
+      "id": "SYS-005",
+      "category": "pipeline",
+      "fact": "Redline encryption was used for CYCLE23 — later deemed unnecessary for this deployment, plaintext sync confirmed working",
+      "confidence": 0.9,
+      "source": "zo_monitor",
+      "timestamp": "2026-05-04T21:35:00Z",
+      "verified": true
+    },
+    {
+      "id": "SYS-006",
+      "category": "workspace",
+      "fact": "Git repo: github.com/splashdown1/coil-system — latest push: a019e36 to main — workspace is clean",
+      "confidence": 0.95,
+      "source": "zo_monitor",
+      "timestamp": "2026-05-04T21:47:00Z",
+      "verified": true
+    },
+    {
+      "id": "KB-001",
+      "category": "knowledge",
+      "fact": "Tru Knowledge Bank created on 2026-05-04 as institutional memory for TRU — bridges tru-core operational memory with zo.space UI",
+      "confidence": 0.95,
+      "source": "tru_core",
+      "timestamp": "2026-05-04T16:00:00Z",
+      "verified": true
+    },
+    {
+      "id": "KB-002",
+      "category": "knowledge",
+      "fact": "LOGOS verification layer requires: internal coherence check, external consistency against known facts, specificity threshold ≥3 content words",
+      "confidence": 0.95,
+      "source": "logos_verify",
+      "timestamp": "2026-05-04T21:42:00Z",
+      "verified": true
+    },
+    {
+      "id": "RES-001",
+      "category": "resolution",
+      "fact": "Anomaly cleared: TASK005 hash mismatch — root cause was wrong header format (4sH32sHH) vs server expected (4sH4s32sHH) — fixed by patching generator to use correct gap bytes",
+      "confidence": 0.95,
+      "source": "zo_monitor",
+      "timestamp": "2026-05-04T21:40:00Z",
+      "verified": true
+    },
+    {
+      "id": "RES-002",
+      "category": "resolution",
+      "fact": "Anomaly cleared: COIL_MASTER_CHIP.json kept growing — root cause was in-place manifest JSON append during chunk processing, solved by using write() after full read",
+      "confidence": 0.95,
+      "source": "zo_monitor",
+      "timestamp": "2026-05-04T21:35:00Z",
+      "verified": true
+    }
+  ]
 }

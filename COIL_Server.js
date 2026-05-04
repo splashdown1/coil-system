@@ -112,62 +112,43 @@ app.use((req, res, next) => {
   next();
 });
 
-// ─── CHUNK UPLOAD ───────────────────────────────────────────────────────────
-
+// ─── UPLOAD ─────────────────────────────────────────────────────────────────
 app.post("/upload", async (req, res) => {
-  const fileId = req.headers["x-file-id"];
-  const chunkIndex = parseInt(req.headers["x-chunk-index"], 10);
-  const expectedHash = req.headers["x-hash"];
-  const compressed = req.headers["x-compressed"] === "true";
-  const encrypted = req.headers["x-encrypted"] === "true";
-  const originalSize = parseInt(req.headers["x-original-size"], 10) || null;
+  const fileId   = req.headers["x-file-id"];
+  const idx      = parseInt(req.headers["x-chunk-index"], 10);
+  const hash     = req.headers["x-hash"];
+  const size     = parseInt(req.headers["x-size"] || "0", 10);
 
-  if (!fileId || isNaN(chunkIndex) || !expectedHash) {
+  if (!fileId || isNaN(idx) || !hash)
     return res.status(400).json({ error: "Missing required headers" });
-  }
 
   const dir = path.join(UPLOAD_DIR, fileId);
   if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
 
   const manifest = readManifest(fileId) || {
-    fileId, receivedChunks: {}, status: "in_progress", createdAt: new Date().toISOString()
+    fileId, receivedChunks: {}, status: "in_progress",
+    createdAt: new Date().toISOString()
   };
 
-  // Read raw body
-  const data = await readBody(req);
+  const raw = await readBody(req);
 
-  // Skip decompress for encrypted (client holds the key)
-  if (compressed && !encrypted) {
-    try {
-      data = await decompressChunk(data);
-    } catch (err) {
-      return res.status(422).json({ error: "Decompression failed", detail: err.message });
-    }
-  }
+  // Hash the raw payload bytes
+  const actual = crypto.createHash("sha256").update(raw).digest("hex");
+  if (actual !== hash)
+    return res.status(415).json({ error: "Hash mismatch", expected: hash, actual });
 
-  // Hash the raw (decompressed) bytes — matches what client sent
-  const isValid = await verifyChunkHash(data, expectedHash);
-  if (!isValid) {
-    return res.status(415).json({ error: "Hash mismatch", expected: expectedHash });
-  }
+  const chunkPath = path.join(dir, String(idx).padStart(8, "0"));
+  fs.writeFileSync(chunkPath, raw);          // store raw — no COIL header
 
-  // Persist
-  const chunkPath = path.join(dir, String(chunkIndex).padStart(8, "0"));
-  fs.writeFileSync(chunkPath, data);
-
-  manifest.receivedChunks[chunkIndex] = {
-    hash: expectedHash,
-    size: data.length,
-    originalSize: originalSize || data.length,
-    receivedAt: new Date().toISOString(),
-    compressed: !!compressed,
-    encrypted: !!encrypted
+  manifest.receivedChunks[idx] = {
+    hash, size: raw.length,
+    receivedAt: new Date().toISOString()
   };
   manifest.status = "in_progress";
   manifest.updatedAt = new Date().toISOString();
   writeManifest(fileId, manifest);
 
-  return res.json({ ok: true, chunkIndex, hashVerified: true, size: data.length });
+  return res.json({ ok: true, chunkIndex: idx, hashVerified: true });
 });
 
 // ─── RETRIEVE RECONSTRUCTED FILE ────────────────────────────────────────────
@@ -252,17 +233,29 @@ app.post("/complete", async (req, res) => {
     });
   }
 
-  // Plaintext reassembly path (legacy)
+  // Plaintext reassembly — FLAT storage: raw slices only
   const buffers = [];
-  const SUPER_CHUNK_HEADER = 46;  // COIL super-chunk header size
-  const HASH_TABLE = 640;         // 20 × SHA-256 @ 32 bytes each
-  const STRIP = SUPER_CHUNK_HEADER + HASH_TABLE; // 686 bytes per chunk
   for (const idx of indices) {
     const chunkPath = path.join(UPLOAD_DIR, fileId, String(idx).padStart(8, "0"));
-    const chunk = fs.readFileSync(chunkPath);
-    buffers.push(chunk.slice(STRIP)); // strip header + hash table
+    buffers.push(fs.readFileSync(chunkPath));
   }
   const assembled = Buffer.concat(buffers);
+
+  // ── Verification before write ──────────────────────────────────────
+  const { expectedSize, expectedHash } = body || {};
+  if (expectedSize != null && assembled.length !== expectedSize)
+    return res.status(422).json({
+      error: "Size mismatch", expected: expectedSize, actual: assembled.length
+    });
+  if (expectedHash) {
+    const actualHash = crypto.createHash("sha256").update(assembled).digest("hex");
+    if (actualHash !== expectedHash)
+      return res.status(422).json({
+        error: "Hash mismatch", expected: expectedHash, actual: actualHash
+      });
+    console.log(`[COMPLETE] ✓ verified ${assembled.length} bytes SHA256=${actualHash}`);
+  }
+
   const isJSON = originalExt === "json";
   const outputPath = path.join(isJSON ? DATA_DIR : UPLOAD_DIR, `${fileId}.${originalExt}`);
   fs.writeFileSync(outputPath, assembled);
