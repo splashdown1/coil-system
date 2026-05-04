@@ -1,0 +1,1 @@
+export default function Doctrine() { return (<div className="min-h-screen bg-black text-white font-mono p-8"><h1 className="text-2xl font-bold mb-4">📜 Doctrine</h1><p className="text-zinc-500">The beliefs and values by which Tru measures all things.</p></div>); }

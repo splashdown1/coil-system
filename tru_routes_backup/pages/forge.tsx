@@ -1,0 +1,1 @@
+export default function Forge() { return (<div className="min-h-screen bg-black text-white font-mono p-8"><h1 className="text-2xl font-bold mb-4">🔥 The Forge</h1><p className="text-zinc-500">Create with Tru — content, code, and concepts forged through Logos analysis.</p></div>); }

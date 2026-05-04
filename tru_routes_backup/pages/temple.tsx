@@ -1,0 +1,1 @@
+export default function Temple() { return (<div className="min-h-screen bg-black text-white font-mono p-8"><h1 className="text-2xl font-bold mb-4">⛩️ Temple</h1><p className="text-zinc-500">Meditation and reflection — Logos-centered stillness before action.</p></div>); }
