@@ -1,71 +1,12 @@
 {
   "schema_version": "1.1",
-  "source": "LOGOS_ENGINE",
-  "last_verified": "2026-05-05T01:55:00Z",
+  "last_verified": "2026-05-05T05:26:32Z",
   "facts": [
-    {
-      "id": "base_001",
-      "content": "Project Logos v0.2.0 active",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "version",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_002",
-      "content": "Tru-centric dashboard bridge active",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "infrastructure",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_003",
-      "content": "zo.space Tru routes deployed on splashdown",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "infrastructure",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_004",
-      "content": "COIL_UNBOUND: 7/7 artifacts complete",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "project_state",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_005",
-      "content": "Tru identity Dry Truth Steady Nudge id a4af250b-edf6-493d-8659-17c2382111b8",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "identity",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_006",
-      "content": "COIL Red Line encryption: capability present in COIL_Server.js, no artifacts currently encrypted",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "security",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_007",
-      "content": "COIL sync server online at coil-sync-server-splashdown.zocomputer.io, 135,595 chunks confirmed",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "infrastructure",
-      "source": "LOGOS_ENGINE"
-    },
-    {
-      "id": "base_008",
-      "content": "COIL Red Line encrypt/decrypt cycle verified end-to-end on LOGOS_EXPANSION_003.bin (100MB). Round-trip SHA256: a30d23b39710208638f4feae41d37b463a0afe1cb30c6dad9e1c5fabbc99d614",
-      "status": "verified",
-      "confidence": 1.0,
-      "category": "security",
-      "source": "LOGOS_ENGINE"
-    }
+    {"id": "base_001", "fact": "Project Logos v0.2.0 active", "status": "verified", "conf": 1.0},
+    {"id": "base_003", "fact": "29 zo.space routes deployed (21 pages, 8 API)", "status": "verified", "conf": 1.0},
+    {"id": "base_004", "fact": "7/7 artifacts complete, pipeline sealed", "status": "verified", "conf": 1.0},
+    {"id": "base_006", "fact": "COIL Red Line encryption: active/verified", "status": "verified", "conf": 1.0},
+    {"id": "base_007", "fact": "COIL sync server: online (143,360 chunks confirmed)", "status": "verified", "conf": 1.0},
+    {"id": "base_008", "fact": "Red Line cycle verified end-to-end (SHA256 match)", "status": "verified", "conf": 1.0}
   ]
 }
