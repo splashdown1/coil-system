@@ -383,6 +383,86 @@ app.delete("/chunks/:fileId/:chunkIndex", async (req, res) => {
   return res.json({ ok: true, chunkIndex });
 });
 
+// ─── PURGE (BULK DELETE) ───────────────────────────────────────────────────
+// Delete all chunks and manifest for a given fileId.
+// Use ?dry=1 query param to preview what would be deleted without removing anything.
+
+app.delete("/purge/:fileId", (req, res) => {
+  const { fileId } = req.params;
+  const dry = req.query.dry === "1";
+
+  const manifestPath = path.join(MANIFESTS_DIR, `${fileId}.json`);
+  const uploadDir = path.join(UPLOAD_DIR, fileId);
+
+  let deletedChunks = 0;
+  let errors = [];
+
+  if (fs.existsSync(uploadDir)) {
+    const chunks = fs.readdirSync(uploadDir);
+    deletedChunks = chunks.length;
+    if (!dry) {
+      try {
+        fs.rmSync(uploadDir, { recursive: true, force: true });
+      } catch (e) {
+        errors.push(`Failed to delete upload dir: ${e.message}`);
+      }
+    }
+  }
+
+  if (fs.existsSync(manifestPath)) {
+    if (!dry) {
+      try { fs.unlinkSync(manifestPath); } catch (e) { errors.push(`Failed to delete manifest: ${e.message}`); }
+    }
+  } else {
+    errors.push(`No manifest found for fileId: ${fileId}`);
+  }
+
+  if (dry) {
+    return res.json({ dry: true, fileId, wouldDeleteChunks: deletedChunks, errors });
+  }
+  return res.json({ ok: true, fileId, deletedChunks, errors: errors.length ? errors : undefined });
+});
+
+// Purge all in-progress tasks older than N minutes (safety valve for orphans).
+// GET /purge-stale?maxAgeMinutes=60  — preview
+// DELETE /purge-stale?maxAgeMinutes=60 — execute
+
+app.get("/purge-stale", (req, res) => {
+  const maxAgeMs = (parseInt(req.query.maxAgeMinutes, 10) || 60) * 60 * 1000;
+  const cutoff = Date.now() - maxAgeMs;
+  const files = fs.readdirSync(MANIFESTS_DIR).filter(f => f.endsWith(".json"));
+  const stale = [];
+  for (const name of files) {
+    const manifest = JSON.parse(fs.readFileSync(path.join(MANIFESTS_DIR, name), "utf8"));
+    const mtime = new Date(manifest.updatedAt || 0).getTime();
+    if (mtime < cutoff && manifest.status !== "complete") {
+      stale.push({ fileId: manifest.fileId || "(unknown)", manifest: name, ageMs: Date.now() - mtime });
+    }
+  }
+  return res.json({ stale, count: stale.length });
+});
+
+app.delete("/purge-stale", (req, res) => {
+  const maxAgeMs = (parseInt(req.query.maxAgeMinutes, 10) || 60) * 60 * 1000;
+  const cutoff = Date.now() - maxAgeMs;
+  const files = fs.readdirSync(MANIFESTS_DIR).filter(f => f.endsWith(".json"));
+  let purged = 0;
+  let errors = [];
+  for (const name of files) {
+    const fullPath = path.join(MANIFESTS_DIR, name);
+    const manifest = JSON.parse(fs.readFileSync(fullPath, "utf8"));
+    const mtime = new Date(manifest.updatedAt || 0).getTime();
+    if (mtime < cutoff && manifest.status !== "complete") {
+      const fileId = manifest.fileId || name.replace(".json", "");
+      const uploadDir = path.join(UPLOAD_DIR, fileId);
+      if (fs.existsSync(uploadDir)) { try { fs.rmSync(uploadDir, { recursive: true, force: true }); } catch (e) { errors.push(e.message); } }
+      try { fs.unlinkSync(fullPath); } catch (e) { errors.push(e.message); }
+      purged++;
+    }
+  }
+  return res.json({ ok: true, purged, errors: errors.length ? errors : undefined });
+});
+
 // ─── AGGREGATE STATUS ──────────────────────────────────────────────────────
 app.get("/tasks", (req, res) => {
   if (!fs.existsSync(MANIFESTS_DIR)) return res.json({ tasks: [], summary: { total: 0, complete: 0, in_progress: 0 } });
