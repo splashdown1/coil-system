@@ -1,12 +1,6 @@
 {
-  "schema_version": "1.1",
-  "last_verified": "2026-05-05T05:26:32Z",
-  "facts": [
-    {"id": "base_001", "fact": "Project Logos v0.2.0 active", "status": "verified", "conf": 1.0},
-    {"id": "base_003", "fact": "29 zo.space routes deployed (21 pages, 8 API)", "status": "verified", "conf": 1.0},
-    {"id": "base_004", "fact": "7/7 artifacts complete, pipeline sealed", "status": "verified", "conf": 1.0},
-    {"id": "base_006", "fact": "COIL Red Line encryption: active/verified", "status": "verified", "conf": 1.0},
-    {"id": "base_007", "fact": "COIL sync server: online (143,360 chunks confirmed)", "status": "verified", "conf": 1.0},
-    {"id": "base_008", "fact": "Red Line cycle verified end-to-end (SHA256 match)", "status": "verified", "conf": 1.0}
-  ]
+  "status": "operational",
+  "tasks_complete": 7,
+  "chunks_total": 143360,
+  "last_sync": "2026-05-05T00:31:00Z"
 }
