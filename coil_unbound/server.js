@@ -1,37 +1,70 @@
 const express = require('express');
+const https = require('https');
+const http = require('http');
 
 const app = express();
 const PORT = 3098;
 
 app.use(express.json());
 
+const ZO_ASK_TIMEOUT_MS = 30000;
+
+function zoAskProxy(input, modelName) {
+  return new Promise((resolve, reject) => {
+    const zoToken = process.env.ZO_CLIENT_IDENTITY_TOKEN || '';
+    const data = JSON.stringify({ input, model_name: modelName || 'vercel:minimax/minimax-m2.7' });
+    const opts = {
+      hostname: 'api.zo.computer',
+      path: '/zo/ask',
+      method: 'POST',
+      headers: {
+        'Authorization': 'Bearer ' + zoToken,
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Content-Length': Buffer.byteLength(data)
+      },
+      timeout: ZO_ASK_TIMEOUT_MS
+    };
+    const proxyReq = https.request(opts, proxyRes => {
+      let body = '';
+      proxyRes.setEncoding('utf8');
+      proxyRes.on('data', chunk => body += chunk);
+      proxyRes.on('end', () => {
+        if (proxyRes.statusCode >= 400) {
+          reject(new Error('Zo backend error: HTTP ' + proxyRes.statusCode + ' — ' + body));
+          return;
+        }
+        try {
+          const parsed = JSON.parse(body);
+          resolve(parsed);
+        } catch (e) {
+          reject(new Error('Zo returned invalid JSON: ' + e.message + ' | body: ' + body.slice(0, 200)));
+        }
+      });
+    });
+    proxyReq.on('error', e => reject(new Error('Zo request failed: ' + e.message)));
+    proxyReq.on('timeout', () => {
+      proxyReq.destroy();
+      reject(new Error('Zo backend timed out after ' + (ZO_ASK_TIMEOUT_MS / 1000) + 's'));
+    });
+    proxyReq.write(data);
+    proxyReq.end();
+  });
+}
+
 // ── Proxy /zo/ask to api.zo.computer so the browser never crosses origins ──
-app.post('/zo/ask', (req, res) => {
-  const zoToken = process.env.ZO_CLIENT_IDENTITY_TOKEN || '';
+app.post('/zo/ask', async (req, res) => {
   const body = typeof req.body === 'string' ? JSON.parse(req.body) : req.body;
   const modelName = body.model_name || 'vercel:minimax/minimax-m2.7';
   const input = body.input || '';
 
-  const https = require('https');
-  const data = JSON.stringify({ input, model_name: modelName });
-  const opts = {
-    hostname: 'api.zo.computer',
-    path: '/zo/ask',
-    method: 'POST',
-    headers: {
-      'Authorization': 'Bearer ' + zoToken,
-      'Content-Type': 'application/json',
-      'Accept': 'application/json',
-      'Content-Length': Buffer.byteLength(data)
-    }
-  };
-  const proxyReq = https.request(opts, proxyRes => {
-    res.status(proxyRes.statusCode);
-    proxyRes.pipe(res);
-  });
-  proxyReq.on('error', e => res.status(500).json({ error: e.message }));
-  proxyReq.write(data);
-  proxyReq.end();
+  try {
+    const result = await zoAskProxy(input, modelName);
+    res.json(result);
+  } catch (e) {
+    console.error('[/zo/ask]', e.message);
+    res.status(500).json({ error: e.message, output: 'Tru is silent — ' + e.message });
+  }
 });
 
 app.get('/', (req, res) => {
@@ -129,6 +162,9 @@ app.get('/', (req, res) => {
     var isExplain = /explain|detail|more|breakdown|elaborate|how|why|what|describe/i.test(message);
     var limit = wordCount > 10 ? (isExplain ? 500 : 100) : 40;
 
+    var controller = new AbortController();
+    var timeoutId = setTimeout(function() { controller.abort(); }, 25000);
+
     return fetch('/zo/ask', {
       method: 'POST',
       headers: {
@@ -138,15 +174,22 @@ app.get('/', (req, res) => {
       body: JSON.stringify({
         input:      message + ' (reply in ' + limit + ' words or less)',
         model_name: 'vercel:minimax/minimax-m2.7'
-      })
+      }),
+      signal: controller.signal
     }).then(function(r) {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
+      clearTimeout(timeoutId);
+      if (!r.ok) throw new Error('HTTP ' + r.status + ' — check Zo bridge');
       return r.json();
     }).then(function(d) {
+      if (d.error && !d.output) throw new Error(d.error);
       var raw    = (d.output || '').trim();
       var answer = truncate(raw, limit);
       if (answer !== raw) answer += ' [+truncated]';
       return answer;
+    }).catch(function(e) {
+      clearTimeout(timeoutId);
+      if (e.name === 'AbortError') throw new Error('Request timed out — Zo bridge slow/unreachable');
+      throw e;
     });
   }
 
@@ -165,8 +208,8 @@ app.get('/', (req, res) => {
       enableUI(true);
       input.focus();
     }).catch(function(e) {
-      append('ai', 'Error: ' + (e.message || String(e)));
-      setStatus('ERROR', '#ff3333');
+      append('ai', '\u26a0\ufe0f ' + e.message);
+      setStatus('READY', '#00ff41');
       enableUI(true);
     });
   }
