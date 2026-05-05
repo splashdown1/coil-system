@@ -1,6 +1,69 @@
 {
-  "status": "operational",
-  "tasks_complete": 7,
-  "chunks_total": 143360,
-  "last_sync": "2026-05-05T00:31:00Z"
+  "schema_version": "1.1",
+  "source": "LOGOS_ENGINE",
+  "last_verified": "2026-05-05T05:40:00Z",
+  "facts": [
+    {
+      "id": "base_001",
+      "fact": "Project Logos v0.2.0 active",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "version"
+    },
+    {
+      "id": "base_002",
+      "fact": "Tru-centric dashboard bridge active",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "infrastructure"
+    },
+    {
+      "id": "base_003",
+      "fact": "49 zo.space routes deployed on splashdown (live state)",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "infrastructure",
+      "note": "DRIFT DETECTED — updated 2026-05-05 via automation"
+    },
+    {
+      "id": "base_004",
+      "fact": "COIL_UNBOUND: 7/7 artifacts complete, 0 in-progress (all artifacts confirmed at 20,480 chunks each — LOGOS_EXPANSION_001.bin fully synced, plus EXPANSION_002/003/004, TASK006/007/008)",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "project_state",
+      "note": "DRIFT DETECTED — updated 2026-05-05 via automation. Pipeline is active, not in standby. 143,360 total chunks confirmed. Source: live /api/status."
+    },
+    {
+      "id": "base_005",
+      "fact": "Tru identity: Dry Truth, Steady Nudge (id: a4af250b-edf6-493d-8659-17c2382111b8)",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "identity"
+    },
+    {
+      "id": "base_006",
+      "fact": "COIL Red Line encryption: capability present in COIL_Server.js, no artifacts currently encrypted",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "security",
+      "note": "ciphertext-only mode exists but redline.active=false on live API."
+    },
+    {
+      "id": "base_007",
+      "fact": "COIL sync server online at coil-sync-server-splashdown.zocomputer.io, 143,360 chunks confirmed (7 artifacts × 20,480)",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "infrastructure",
+      "note": "DRIFT DETECTED — updated 2026-05-05 via automation"
+    },
+    {
+      "id": "base_008",
+      "fact": "COIL Red Line encrypt/decrypt cycle verified end-to-end on LOGOS_EXPANSION_003.bin (100MB). Round-trip SHA256: a30d23b39710208638f4feae41d37b463a0afe1cb30c6dad9e1c5fabbc99d614",
+      "status": "verified",
+      "conf": 1.0,
+      "category": "security",
+      "note": "Encrypt then decrypt produces byte-for-byte identical output. Salt/IV/algorithm/checksum carried in base-64 metadata header.",
+      "verified_at": "2026-05-04T23:45:00Z"
+    }
+  ]
 }
