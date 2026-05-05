@@ -12,4 +12,7 @@ LOGOS_*
 Cycle23_*
 operation_splashdown_FINAL.zip
 operation-splashdown-FINAL-v2-zip/
-splashdown-live/
+# Block build artifacts inside splashdown-live, but allow the dir to be tracked
+splashdown-live/node_modules/
+splashdown-live/dist/
+splashdown-live/.vite/
