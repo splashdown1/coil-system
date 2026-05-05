@@ -1,0 +1,4 @@
+[2026-05-05 04:39:03] TASK 005 RESUME — 6713 super-chunks total
+[2026-05-05 04:39:03] Batch log: 336 entries | Done: 6713/6713 | Pending: 0 (~0 batches)
+[2026-05-05 04:39:03] Resuming from batch index 336 (SC NONE)
+[2026-05-05 04:39:03] [COMPLETE] 6713/6713 super-chunks confirmed
