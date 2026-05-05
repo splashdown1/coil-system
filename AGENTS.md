@@ -33,6 +33,18 @@ TRU (Dry Truth, Steady Nudge) — resident AI for splashdown.zo.computer.
 - tru-core is supervised by zo/supervisord — if it restarts repeatedly, check `/dev/shm/tru-core_err.log` for module import errors
 - zo.space site: `splashdown.zo.space` | Routes: `/` (chat), `/timeline`, `/stocks`, `/api/status`, `/api/sync-reset`, `/api/tru-ask`, `/api/zo-ask`
 
+## Canonical Artifacts (6/6)
+| ID | Chunks | Status |
+|---|---|---|
+| LOGOS_EXPANSION_001.bin | 20,480 | complete |
+| LOGOS_EXPANSION_002 | 20,480 | complete |
+| LOGOS_EXPANSION_003 | 20,480 | complete |
+| LOGOS_EXPANSION_004 | 20,480 | complete |
+| TASK006 | 20,480 | complete |
+| TASK007 | 20,480 | complete |
+
+**Note:** TASK008 exists on server (20,480 chunks) but is a duplicate/orphan from a prior run — NOT canonical. Server shows 7 total, canonical count is 6.
+
 ## Verified Binaries
 | File | SHA256 | Size |
 |---|---|---|
@@ -53,7 +65,9 @@ TRU (Dry Truth, Steady Nudge) — resident AI for splashdown.zo.computer.
 5. **Server /complete must STRIP=686** before concat — 46 header + 640 hash table per chunk
 
 ## Active Anomalies (watch list)
-- LOGOS_EXPANSION_001: still in_progress (12,715/20,480 chunks) — monitor
-- TASK005 not showing in dashboard — manifest wiped during debug, server data intact
-- COIL_MASTER_CHIP-1777394476: **REMOVED** — ghost entry, 0 chunks on server despite 6,713 local chip files; not worth restoring
-- CANONICAL_ARTIFACTS: 1 entry (COIL_MIRROR_CHECKPOINT, 6,713 files, synced)
+- ~~LOGOS_EXPANSION_001 in_progress~~ — RESOLVED: server shows 20,480 chunks, complete
+- ~~TASK005 not showing in dashboard~~ — RESOLVED: wiped, not worth restoring
+- ~~COIL_MASTER_CHIP-1777394476~~ — REMOVED: ghost, 0 chunks on server
+- TASK008: on server with 20,480 chunks, orphan/duplicate, NOT canonical
+- CANONICAL_ARTIFACTS: 6/6 confirmed live at server (4 LOGOS + TASK006 + TASK007)
+- 6,713 legacy chip.sc.*.bin files: **WIPED** from COIL_mirror/SC — 41MB freed, no longer needed
