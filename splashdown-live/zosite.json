@@ -1,0 +1,15 @@
+{
+  "name": "splashdown-live",
+  "local_port": 55136,
+  "entrypoint": "bun run dev",
+  "publish": {
+    "label": "splashdown-live",
+    "type": "http",
+    "entrypoint": "bun run prod",
+    "published_port": 52301,
+    "env": {
+      "NODE_ENV": "production",
+      "ZO_CLIENT_IDENTITY_TOKEN": "none"
+    }
+  }
+}
