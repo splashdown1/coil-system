@@ -55,3 +55,5 @@ TRU (Dry Truth, Steady Nudge) — resident AI for splashdown.zo.computer.
 ## Active Anomalies (watch list)
 - LOGOS_EXPANSION_001: still in_progress (12,715/20,480 chunks) — monitor
 - TASK005 not showing in dashboard — manifest wiped during debug, server data intact
+- COIL_MASTER_CHIP-1777394476: **REMOVED** — ghost entry, 0 chunks on server despite 6,713 local chip files; not worth restoring
+- CANONICAL_ARTIFACTS: 1 entry (COIL_MIRROR_CHECKPOINT, 6,713 files, synced)
