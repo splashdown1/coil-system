@@ -1,0 +1,29 @@
+[
+  {
+    "id": "5340be92-6259-453f-8a3c-05bdd46a074c",
+    "title": "Review and Manage COIL Archive",
+    "rrule": "DTSTART;TZID=America/Chicago:20260730T090015\nRRULE:FREQ=DAILY;COUNT=1",
+    "instruction": "Review /home/workspace/COIL_archive/FAILED_RUNS.tar.gz — if the COIL pipeline is stable and no issues have arisen, delete it to reclaim disk space. Also confirm MANIFEST.md is in COIL_archive/. [TRUNCATED]",
+    "next_run": "2027-07-30T09:00:15-05:00",
+    "active": true,
+    "model": "zo:minimax/minimax-m2.7"
+  },
+  {
+    "id": "a80bba7d-7c71-40f4-a3de-2377f678dda5",
+    "title": "TRU Nightly Audit Loop Execution",
+    "rrule": "DTSTART;TZID=America/Chicago:20260504T173604\nRRULE:FREQ=DAILY;INTERVAL=1;BYHOUR=6;BYMINUTE=0",
+    "instruction": "Run the TRU nightly audit loop. Execute: python3 /home/workspace/.z/tru/tru_audit_loop.py --days 1\n\nCapture stdout. If exit code is 1 (contradictions detected), alert me with a summary of the contradictions. [TRUNCATED]",
+    "next_run": "2026-05-05T06:00:04-05:00",
+    "active": true,
+    "model": "zo:openai/gpt-5.4-mini"
+  },
+  {
+    "id": "f9432cb2-02de-47be-b115-801379e7c614",
+    "title": "LOGOS_ENGINE Fact Verification Cycle",
+    "rrule": "DTSTART;TZID=America/Chicago:20260504T183632\nRRULE:FREQ=HOURLY;INTERVAL=6",
+    "instruction": "Run a LOGOS_ENGINE fact verification cycle. This automation checks current live state against the gold standard in /home/workspace/verified_facts.json and updates it if drift is detected.\n\nSTEPS:\n\n1. [TRUNCATED]",
+    "next_run": "2026-05-05T00:36:32-05:00",
+    "active": true,
+    "model": "zo:minimax/minimax-m2.7"
+  }
+]
