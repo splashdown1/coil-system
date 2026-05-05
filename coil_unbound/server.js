@@ -1,11 +1,55 @@
 const express = require('express');
 const https = require('https');
 const http = require('http');
+const { spawn } = require('child_process');
+const path = require('path');
 
 const app = express();
 const PORT = 3098;
 
 app.use(express.json());
+
+// ── Live chunk count from tru_core.py ──
+function getChipSummary() {
+  return new Promise((resolve, reject) => {
+    const py = spawn('python3', [
+      '-c',
+      `
+import sys, json, os
+sys.path.insert(0, '/home/workspace')
+from tru_core import get_chip_summary
+result = get_chip_summary()
+# Only include serialisable fields
+print(json.dumps({k: v for k, v in result.items() if k != '_key'}))
+`
+    ], { cwd: '/home/workspace' });
+
+    let out = '', err = '';
+    py.stdout.on('data', d => out += d);
+    py.stderr.on('data', d => err += d);
+    py.on('close', code => {
+      if (code !== 0) return reject(new Error(err || `python exit ${code}`));
+      try { resolve(JSON.parse(out)); } catch (e) { reject(e); }
+    });
+  });
+}
+
+// ── /api/health — real diagnostic endpoint ──
+app.get('/api/health', async (req, res) => {
+  try {
+    const summary = await getChipSummary();
+    res.json({
+      status: summary.status || 'ok',
+      heartbeat: new Date().toISOString(),
+      chunk_count: summary.chunk_count,
+      indexed_at: summary.indexed_at,
+      tasks: summary.tasks,
+      complete: summary.complete
+    });
+  } catch (e) {
+    res.json({ status: 'degraded', error: e.message });
+  }
+});
 
 const ZO_ASK_TIMEOUT_MS = 30000;
 
