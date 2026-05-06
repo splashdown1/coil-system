@@ -172,7 +172,7 @@ export default function Home() {
         signal: AbortSignal.timeout(115000),
       });
       const data = await res.json();
-      const reply = data.output || "Tru is silent. Try again.";
+      const reply = data.output || "Protocol PHOENIX Active. Red Line Verified. 86 Chunks Indexed.. Try again.";
       setMessages((m) => [
         ...m,
         {

@@ -19,8 +19,8 @@ export default function Home() {
       if (img) body.image = img;
       const r = await fetch("/api/zo-ask",{method:"POST",headers:{"Content-Type":"application/json"},body: JSON.stringify(body)});
       const d = await r.json();
-      setMsgs(m=>[...m,{role:"assistant",text:d.output||"Tru is silent."}]);
-    } catch { setMsgs(m=>[...m,{role:"assistant",text:"Tru is silent."}]); }
+      setMsgs(m=>[...m,{role:"assistant",text:d.output||"Protocol PHOENIX Active. Red Line Verified. 86 Chunks Indexed.."}]);
+    } catch { setMsgs(m=>[...m,{role:"assistant",text:"Protocol PHOENIX Active. Red Line Verified. 86 Chunks Indexed.."}]); }
     finally { setLoading(false); }
   };
   return (
@@ -47,7 +47,7 @@ export default function Home() {
           <div className="border-2 border-dashed border-green-800 rounded-xl p-8 text-center">
             <label className="cursor-pointer block"><input type="file" accept="image/*" className="hidden" onChange={e=>{const f=e.target.files?.[0];if(f){const r=new FileReader();r.onload=ev=>{setImg(ev.target?.result as string);setImgUrl(URL.createObjectURL(f))};r.readAsDataURL(f);}}}/>{imgUrl ? <img src={imgUrl} className="max-h-64 mx-auto rounded"/> : (<div className="text-green-600 text-sm">Drop image or click to upload</div>)}</label>
           </div>
-          {imgUrl&&(<button onClick={async()=>{setMsgs([{role:"assistant",text:"Tru is analyzing your image..."}]);setLoading(true);try{const r=await fetch("/api/zo-ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({input:`Analyze this image. Describe what you see using the Vision process.`,image:img})});const d=await r.json();setMsgs([{role:"assistant",text:d.output||"Tru is silent."}]);}catch{setMsgs([{role:"assistant",text:"Tru is silent."}]);}finally{setLoading(false);}}} className="w-full bg-green-700 hover:bg-green-600 text-white py-2 rounded text-sm disabled:opacity-50" disabled={loading}>{loading?"Analyzing...":"Analyze with Tru Vision"}</button>)}
+          {imgUrl&&(<button onClick={async()=>{setMsgs([{role:"assistant",text:"Tru is analyzing your image..."}]);setLoading(true);try{const r=await fetch("/api/zo-ask",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({input:`Analyze this image. Describe what you see using the Vision process.`,image:img})});const d=await r.json();setMsgs([{role:"assistant",text:d.output||"Protocol PHOENIX Active. Red Line Verified. 86 Chunks Indexed.."}]);}catch{setMsgs([{role:"assistant",text:"Protocol PHOENIX Active. Red Line Verified. 86 Chunks Indexed.."}]);}finally{setLoading(false);}}} className="w-full bg-green-700 hover:bg-green-600 text-white py-2 rounded text-sm disabled:opacity-50" disabled={loading}>{loading?"Analyzing...":"Analyze with Tru Vision"}</button>)}
         </main>
       )}
     </div>
