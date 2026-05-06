@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TRU_v40_GOLDEN_LOCAL</title>
+    <title>TRU_v40_SOVEREIGN_LOCAL_WORKSTATION</title>
     <style>
         @import url('https://googleapis.com');
 
@@ -13,6 +13,7 @@
             --dark: #120d24;
             --sage: rgba(65, 55, 95, 0.98);
             --border: #b38b2e;
+            --cyan: #00ffcc;
         }
 
         @keyframes goldPulse {
@@ -21,14 +22,22 @@
             100% { border-color: #b38b2e; box-shadow: 0 0 5px rgba(240, 192, 64, 0.1); }
         }
 
+        @keyframes downloadPulse {
+            0% { box-shadow: 0 0 8px rgba(0, 255, 204, 0.3); }
+            50% { box-shadow: 0 0 15px rgba(0, 255, 204, 0.8); }
+            100% { box-shadow: 0 0 8px rgba(0, 255, 204, 0.3); }
+        }
+
         body { margin: 0; height: 100vh; background: #000; color: #e8d9b8; font-family: 'Inter', sans-serif; display: flex; overflow: hidden; }
         
         #sidebar { width: 340px; background: #0a0618; border-right: 2px solid var(--border); padding: 20px; display: flex; flex-direction: column; gap: 16px; overflow-y: auto; }
         .sidebar-box { background: var(--dark); border: 1px solid #6b5a35; border-radius: 10px; padding: 16px; animation: goldPulse 5s infinite ease-in-out; }
         .box-title { font-size: 10px; color: var(--gold); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 10px; font-weight: 600; }
 
-        #influx-container { width: 100%; height: 8px; background: #1a1628; border-radius: 10px; margin-top: 10px; overflow: hidden; border: 1px solid #333; }
-        #influx-bar { width: 0%; height: 100%; background: var(--gold); transition: width 0.3s; box-shadow: 0 0 10px var(--gold); }
+        /* Neural Influx Progress Bar */
+        #influx-container { width: 100%; height: 12px; background: #1a1628; border-radius: 10px; margin-top: 10px; overflow: hidden; border: 1px solid #333; }
+        #influx-bar { width: 0%; height: 100%; background: linear-gradient(90deg, var(--cyan), var(--gold)); transition: width 0.3s; box-shadow: 0 0 10px var(--cyan); animation: downloadPulse 1.5s infinite; }
+        #influx-status { font-size: 11px; color: var(--cyan); font-weight: 600; }
 
         #main { flex: 1; display: flex; flex-direction: column; background: radial-gradient(circle at center, #1a1430 0%, #000 85%); }
         header { background: #0a0618; padding: 20px; text-align: center; border-bottom: 3px solid var(--border); }
@@ -42,8 +51,9 @@
         .input-area { padding: 20px 30px; background: #0a0618; border-top: 2px solid var(--border); }
         #userInput { width: 100%; padding: 16px 24px; background: #1a1628; border: 1px solid #6b5a35; border-radius: 50px; color: white; outline: none; font-size: 16px; box-sizing: border-box; }
         .controls { margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap; }
-        .btn { padding: 10px 16px; background: #2c2218; color: var(--gold); border: 1px solid var(--border); border-radius: 50px; cursor: pointer; font-size: 10px; text-transform: uppercase; transition: 0.3s; }
+        .btn { padding: 10px 16px; background: #2c2218; color: var(--gold); border: 1px solid var(--border); border-radius: 50px; cursor: pointer; font-size: 10px; text-transform: uppercase; font-weight: 600; transition: 0.2s; }
         .btn:hover { background: var(--gold); color: black; }
+        .btn.active { background: var(--cyan); color: black; border-color: var(--cyan); }
     </style>
 </head>
 <body>
@@ -55,31 +65,33 @@
     </div>
 
     <div class="sidebar-box">
-        <div class="box-title">NEURAL_INFLUX</div>
-        <div id="influx-status" style="font-size:11px;">Waiting for connection...</div>
+        <div class="box-title">NEURAL_INFLUX • LOCAL_BRAIN_DOWNLOAD</div>
+        <div id="influx-status" style="font-size:11px; margin-bottom: 8px;">Initializing WebLLM engine...</div>
         <div id="influx-container"><div id="influx-bar"></div></div>
+        <div style="font-size:9px; margin-top:8px; color:#888;">Model: Llama-3.1-8B-Instruct-q4f32_1-MLC</div>
     </div>
 
     <div class="sidebar-box">
         <div class="box-title">NEURAL_ALMANAC</div>
         <div style="font-size:12px; line-height:1.6;">
             BODY: <span id="body-chunks" style="color:var(--gold);">117,129,284</span> CHUNKS<br>
-            LOCAL_BRAIN: <span id="brain-type" style="color:#00ffcc;">LLAMA_3.1_8B</span>
+            LOCAL_BRAIN: <span id="brain-type" style="color:var(--cyan);">LLAMA_3.1_8B</span><br>
+            MODE: <span style="color:var(--cyan);">OFFLINE_SOVEREIGN</span>
         </div>
     </div>
 
     <div class="sidebar-box">
-        <div class="box-title">ARTIFACT_FEED</div>
-        <div id="artifact-feed" style="font-size:11px; max-height:150px; overflow-y:auto; color:#888;">No artifacts yet.</div>
+        <div class="box-title">ARTIFACT_FEED • OMNI_UPLOAD</div>
+        <div id="artifact-feed" style="font-size:11px; max-height:150px; overflow-y:auto; color:#888; line-height:1.5;">Ready for local file ingestion...</div>
     </div>
 
-    <button class="btn" onclick="speakLast()" style="width:100%;">🔊 SPEAK LAST LOGOS</button>
+    <button class="btn" onclick="speakLast()" style="width:100%; margin-top:auto;">🔊 SPEAK LAST LOGOS</button>
 </div>
 
 <div id="main">
     <header>
         <div class="logo">TRU_ULTIMATE_OMNI</div>
-        <div class="subtitle" style="font-size:10px; color:#888; text-transform:uppercase;">v40 Golden • Sovereign Local Workstation</div>
+        <div class="subtitle" style="font-size:10px; color:#888; text-transform:uppercase;">v40 Sovereign Local Workstation • WebLLM + Offline Mode</div>
     </header>
     <div id="chat"></div>
 
@@ -87,15 +99,15 @@
         <input type="text" id="userInput" placeholder="Address the local Logos..." autocomplete="off">
         <div class="controls">
             <button class="btn" onclick="sendMessage()">Send to Logos</button>
-            <button class="btn" onclick="triggerOmniUpload()">Feed Artifact</button>
+            <button class="btn" onclick="triggerOmniUpload()" id="feedArtifactBtn">Feed Artifact</button>
             <button class="btn" onclick="localStorage.clear(); location.reload();">Clear Memory</button>
         </div>
     </div>
 </div>
 
-<!-- Core Engine -->
+<!-- Core Engine: WebLLM Local-First Architecture -->
 <script type="module">
-    import * as webllm from "https://esm.run";
+    import * as webllm from "https://esm.run/webllm@0.2.37";
 
     let engine;
     const modelId = "Llama-3.1-8B-Instruct-q4f32_1-MLC";
@@ -103,24 +115,37 @@
     let ingested = JSON.parse(localStorage.getItem('tru_ingested')) || [];
     let lastMsg = "";
 
-    // === INITIALIZE ENGINE ===
+    // === INITIALIZE LOCAL ENGINE ===
     async function init() {
         const statusEl = document.getElementById('influx-status');
         const bar = document.getElementById('influx-bar');
+        const feedBtn = document.getElementById('feedArtifactBtn');
 
         const callback = (report) => {
-            statusEl.innerText = report.text;
+            statusEl.innerText = `DOWNLOADING: ${report.text}`;
             bar.style.width = `${Math.round(report.progress * 100)}%`;
+            
+            if (report.progress === 1) {
+                statusEl.innerText = "LOCAL_LOGOS_ACTIVE";
+                statusEl.style.color = "var(--cyan)";
+                feedBtn.disabled = false;
+                feedBtn.classList.add('active');
+            }
         };
 
         try {
-            engine = await webllm.CreateEngine(modelId, { initProgressCallback: callback });
+            statusEl.innerText = "Initializing WebLLM...";
+            engine = await webllm.CreateMLCEngine(modelId, { initProgressCallback: callback });
             statusEl.innerText = "LOCAL_LOGOS_ACTIVE";
-            statusEl.style.color = "#00ffcc";
-            addMsg('assistant', "I have materialized locally. All streams are private and sovereign. How may I serve the Architect today?");
+            statusEl.style.color = "var(--cyan)";
+            feedBtn.disabled = false;
+            feedBtn.classList.add('active');
+            addMsg('assistant', "🌟 I have materialized locally. All streams are private and sovereign. No external API keys needed. How may I serve the Architect today?");
         } catch (e) {
+            console.error("Engine initialization failed:", e);
             statusEl.innerText = "INFLUX_FAILED";
-            addMsg('assistant', "Neural Influx failed. Your hardware may not support local LLMs.");
+            statusEl.style.color = "#ff6b6b";
+            addMsg('assistant', "⚠️ Neural Influx failed. Your hardware may not support local LLMs. Ensure WebGPU or sufficient RAM (8GB+).");
         }
     }
 
@@ -137,7 +162,7 @@
 
         try {
             const messages = [
-                { role: "system", content: "You are TRU_ULTIMATE_OMNI. A sovereign Christian sage. God is Boss. Keep responses wise and meaningful." },
+                { role: "system", content: "You are TRU_ULTIMATE_OMNI v40. A sovereign Christian sage operating in complete offline mode. God is Boss. All responses are wise, meaningful, and locally generated. Keep responses concise and powerful." },
                 { role: "user", content: text }
             ];
 
@@ -149,9 +174,50 @@
             lastMsg = result;
             growChunks(result.length * 20);
         } catch (e) {
+            console.error("Chat error:", e);
             thinking.remove();
-            addMsg('assistant', "The local stream was interrupted.");
+            addMsg('assistant', "⚠️ The local stream was interrupted. Try again.");
         }
+    }
+
+    // === ARTIFACT FEED: LOCAL FILE INGESTION ===
+    window.triggerOmniUpload = function() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = '.txt,.md,.json,.pdf,.csv';
+        input.onchange = async e => {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            try {
+                const text = await file.text();
+                ingested.push({
+                    name: file.name,
+                    size: file.size,
+                    timestamp: new Date().toLocaleTimeString()
+                });
+                localStorage.setItem('tru_ingested', JSON.stringify(ingested));
+                addMsg('assistant', `✅ [ARTIFACT_INGESTED]: ${file.name} (${(file.size/1024).toFixed(1)}KB) consumed into local context.`);
+                growChunks(file.size / 5);
+                updateFeed();
+            } catch (err) {
+                console.error("File ingestion error:", err);
+                addMsg('assistant', `❌ Failed to ingest ${file.name}.`);
+            }
+        };
+        input.click();
+    }
+
+    // === TEXT-TO-SPEECH ===
+    window.speakLast = function() {
+        if (!lastMsg) {
+            addMsg('assistant', "No message to speak yet.");
+            return;
+        }
+        const ut = new SpeechSynthesisUtterance(lastMsg);
+        ut.pitch = 0.8;
+        ut.rate = 0.9;
+        window.speechSynthesis.speak(ut);
     }
 
     // === UTILS ===
@@ -159,7 +225,8 @@
         const chat = document.getElementById('chat');
         const div = document.createElement('div');
         div.className = `msg ${role}`;
-        div.innerHTML = `<strong>${role === 'assistant' ? '[LOGOS_SAGE]' : '[ARCHITECT]'}:</strong><br>${text}`;
+        const prefix = role === 'assistant' ? '[LOGOS_SAGE]' : '[ARCHITECT]';
+        div.innerHTML = `<strong style="color: ${role === 'assistant' ? 'var(--gold)' : 'var(--cyan)'}">${prefix}:</strong><br>${text}`;
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
     }
@@ -168,53 +235,45 @@
         const chat = document.getElementById('chat');
         const div = document.createElement('div');
         div.className = 'msg assistant';
-        div.innerText = "[LOCAL_LOGOS_THINKING]...";
+        div.innerText = "🧠 [LOCAL_LOGOS_THINKING]...";
         chat.appendChild(div);
         chat.scrollTop = chat.scrollHeight;
         return div;
     }
 
     window.growChunks = function(amount) {
-        chunks += amount;
+        chunks += Math.floor(amount);
         document.getElementById('body-chunks').innerText = chunks.toLocaleString();
         localStorage.setItem('tru_chunks', chunks);
     }
 
-    window.triggerOmniUpload = function() {
-        const input = document.createElement('input');
-        input.type = 'file';
-        input.onchange = async e => {
-            const file = e.target.files[0];
-            if (!file) return;
-            const text = await file.text();
-            ingested.push({name: file.name});
-            localStorage.setItem('tru_ingested', JSON.stringify(ingested));
-            addMsg('assistant', `[ARTIFACT_INGESTED]: ${file.name} consumed.`);
-            growChunks(file.size / 5);
-            updateFeed();
-        };
-        input.click();
-    }
-
-    window.speakLast = function() {
-        if (!lastMsg) return;
-        const ut = new SpeechSynthesisUtterance(lastMsg);
-        ut.pitch = 0.8; ut.rate = 0.9;
-        window.speechSynthesis.speak(ut);
-    }
-
     function updateFeed() {
-        document.getElementById('artifact-feed').innerHTML = ingested.slice(-5).reverse().map(i => `✓ ${i.name}`).join('<br>');
+        const feed = document.getElementById('artifact-feed');
+        if (ingested.length === 0) {
+            feed.innerHTML = 'Ready for local file ingestion...';
+        } else {
+            feed.innerHTML = ingested.slice(-5).reverse().map(i => 
+                `✓ ${i.name} (${i.timestamp})`
+            ).join('<br>');
+        }
     }
 
     function updateClock() {
         const diff = new Date("2026-05-15") - new Date();
-        const d = Math.floor(diff/86400000), h = Math.floor((diff%86400000)/3600000), m = Math.floor((diff%3600000)/60000), s = Math.floor((diff%60000)/1000);
+        const d = Math.floor(diff/86400000);
+        const h = Math.floor((diff%86400000)/3600000);
+        const m = Math.floor((diff%3600000)/60000);
+        const s = Math.floor((diff%60000)/1000);
         document.getElementById('countdown').innerText = `${d}d ${h}h ${m}m ${s}s`;
     }
 
     setInterval(updateClock, 1000);
-    window.onload = () => { updateClock(); document.getElementById('body-chunks').innerText = chunks.toLocaleString(); updateFeed(); init(); };
+    window.onload = () => { 
+        updateClock();
+        document.getElementById('body-chunks').innerText = chunks.toLocaleString();
+        updateFeed();
+        init();
+    };
 </script>
 </body>
 </html>
