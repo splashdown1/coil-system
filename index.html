@@ -1,497 +1,175 @@
-<script type="text/babel">
-import { useState, useEffect, useRef } from "react";
-
-const ACCEL = 1.2;
-const FRICTION = 0.95;
-const ELASTIC = 0.08;
-
-export default function ArcadeTab() {
-  const canvasRef = useRef<HTMLCanvasElement>(null);
-  const [score, setScore] = useState(0);
-  const [gameStatus, setGameStatus] = useState("CLICK TO INITIALIZE");
-  const [streak, setStreak] = useState(0);
-  const [showHint, setShowHint] = useState(false);
-
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext("2d");
-    if (!ctx) return;
-
-    canvas.width = canvas.offsetWidth;
-    canvas.height = canvas.offsetHeight;
-    const W = canvas.width;
-    const H = canvas.height;
-
-    // ── State ──────────────────────────────────────────────────────────────
-    const keys: Record<string, boolean> = {};
-    let tru = { x: W / 2, y: H / 2, vx: 0, vy: 0, angle: 0, firing: false, fireTimer: 0 };
-    let obstacles: Array<{ x: number; y: number; vx: number; vy: number; r: number; active: boolean; color: string }> = [];
-    let orbs: Array<{ x: number; y: number; vx: number; vy: number; r: number; active: boolean; hue: number }> = [];
-    let particles: Array<{ x: number; y: number; vx: number; vy: number; life: number; color: string; size: number }> = [];
-    let nebula: Array<{ x: number; y: number; r: number; a: number; hue: number }> = [];
-    let stars: Array<{ x: number; y: number; size: number; brightness: number; twinkle: number }> = [];
-    let scoreVal = 0;
-    let streakVal = 0;
-    let frame = 0;
-    let cam = { x: 0, y: 0 };
-    let running = false;
-    let raf = 0;
-    let spawnTimer = 0;
-    let pulseFlash = 0;
-    let hintTimer = 0;
-
-    // ── Generate world ───────────────────────────────────────────────────────
-    for (let i = 0; i < 220; i++) {
-      stars.push({
-        x: Math.random() * W * 3 - W,
-        y: Math.random() * H * 3 - H,
-        size: Math.random() * 1.5 + 0.3,
-        brightness: Math.random() * 0.6 + 0.4,
-        twinkle: Math.random() * Math.PI * 2,
-      });
-    }
-    for (let i = 0; i < 18; i++) {
-      nebula.push({
-        x: Math.random() * W * 3 - W,
-        y: Math.random() * H * 3 - H,
-        r: Math.random() * 180 + 60,
-        a: Math.random() * 0.06 + 0.02,
-        hue: Math.random() * 360,
-      });
-    }
-    for (let i = 0; i < 6; i++) {
-      spawnObstacle(true);
-    }
-    for (let i = 0; i < 4; i++) {
-      spawnOrb(true);
-    }
-
-    function spawnObstacle(initial = false) {
-      const edge = initial ? Math.floor(Math.random() * 4) : Math.floor(Math.random() * 4);
-      let x: number, y: number, vx: number, vy: number;
-      const speed = Math.random() * 1.2 + 0.4;
-      if (edge === 0) { x = Math.random() * W * 3 - W; y = -80; vx = (Math.random() - 0.5) * speed; vy = Math.random() * speed + 0.3; }
-      else if (edge === 1) { x = Math.random() * W * 3 - W; y = H * 3 + 80; vx = (Math.random() - 0.5) * speed; vy = -(Math.random() * speed + 0.3); }
-      else if (edge === 2) { x = -80; y = Math.random() * H * 3 - H; vx = Math.random() * speed + 0.3; vy = (Math.random() - 0.5) * speed; }
-      else { x = W * 3 + 80; y = Math.random() * H * 3 - H; vx = -(Math.random() * speed + 0.3); vy = (Math.random() - 0.5) * speed; }
-      const r = Math.random() * 18 + 10;
-      const colors = ["#ff2244", "#ff4411", "#cc0033", "#ff6633", "#ff1122"];
-      obstacles.push({ x, y, vx, vy, r, active: true, color: colors[Math.floor(Math.random() * colors.length)] });
-    }
-
-    function spawnOrb(initial = false) {
-      const edge = initial ? Math.floor(Math.random() * 4) : Math.floor(Math.random() * 4);
-      let x: number, y: number;
-      const speed = Math.random() * 0.5 + 0.2;
-      if (edge === 0) { x = Math.random() * W * 3 - W; y = -60; }
-      else if (edge === 1) { x = Math.random() * W * 3 - W; y = H * 3 + 60; }
-      else if (edge === 2) { x = -60; y = Math.random() * H * 3 - H; }
-      else { x = W * 3 + 60; y = Math.random() * H * 3 - H; }
-      const vx = (Math.random() - 0.5) * speed;
-      const vy = (Math.random() - 0.5) * speed;
-      const r = Math.random() * 8 + 5;
-      orbs.push({ x, y, vx, vy, r, active: true, hue: Math.random() * 360 });
-    }
-
-    function spawnParticle(x: number, y: number, color: string, count = 8, speed = 3) {
-      for (let i = 0; i < count; i++) {
-        const a = Math.random() * Math.PI * 2;
-        const s = Math.random() * speed + 0.5;
-        particles.push({ x, y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, life: 1, color, size: Math.random() * 3 + 1 });
-      }
-    }
-
-    // ── Game loop ────────────────────────────────────────────────────────────
-    function start() {
-      if (running) return;
-      running = true;
-      setGameStatus("CALIBRATING_FLIGHT_PATH");
-      setScore(0);
-      setStreak(0);
-      scoreVal = 0;
-      streakVal = 0;
-      tru = { x: W / 2, y: H / 2, vx: 0, vy: 0, angle: 0, firing: false, fireTimer: 0 };
-      obstacles = []; orbs = []; particles = [];
-      for (let i = 0; i < 6; i++) spawnObstacle(true);
-      for (let i = 0; i < 4; i++) spawnOrb(true);
-      loop();
-      setTimeout(() => setGameStatus("ACTIVE"), 1500);
-    }
-
-    function loop() {
-      if (!running) return;
-      raf = requestAnimationFrame(loop);
-      frame++;
-      hintTimer++;
-      if (hintTimer > 180) setShowHint(true);
-
-      // ── Input → acceleration ───────────────────────────────────────────────
-      let ax = 0, ay = 0;
-      if (keys["ArrowLeft"] || keys["KeyA"]) ax -= ACCEL;
-      if (keys["ArrowRight"] || keys["KeyD"]) ax += ACCEL;
-      if (keys["ArrowUp"] || keys["KeyW"]) ay -= ACCEL;
-      if (keys["ArrowDown"] || keys["KeyS"]) ay += ACCEL;
-
-      tru.vx += ax;
-      tru.vy += ay;
-      tru.vx *= FRICTION;
-      tru.vy *= FRICTION;
-      tru.x += tru.vx;
-      tru.y += tru.vy;
-
-      // Elastic screen boundary
-      const margin = 60;
-      if (tru.x < margin) tru.vx += (margin - tru.x) * ELASTIC;
-      if (tru.x > W - margin) tru.vx -= (tru.x - (W - margin)) * ELASTIC;
-      if (tru.y < margin) tru.vy += (margin - tru.y) * ELASTIC;
-      if (tru.y > H - margin) tru.vy -= (tru.y - (H - margin)) * ELASTIC;
-      tru.x = Math.max(10, Math.min(W - 10, tru.x));
-      tru.y = Math.max(10, Math.min(H - 10, tru.y));
-
-      // Smooth camera follow (parallax)
-      cam.x += (tru.x - W / 2 - cam.x) * 0.08;
-      cam.y += (tru.y - H / 2 - cam.y) * 0.08;
-
-      // Fire
-      if (keys["KeyP"] && tru.fireTimer <= 0) {
-        tru.firing = true;
-        tru.fireTimer = 18;
-        pulseFlash = 8;
-        spawnParticle(tru.x, tru.y, "#ffffff", 14, 5);
-        scoreVal += 50 + Math.floor(streakVal * 10);
-        setScore(scoreVal);
-        setStreak(s => s + 1);
-        hintTimer = 0;
-        setShowHint(false);
-      }
-      if (tru.fireTimer > 0) tru.fireTimer--;
-      if (pulseFlash > 0) pulseFlash--;
-
-      // ── Update world ──────────────────────────────────────────────────────
-      spawnTimer++;
-      if (spawnTimer > 90) { spawnObstacle(); spawnTimer = 0; }
-      if (frame % 45 === 0) spawnOrb();
-
-      obstacles = obstacles.filter(o => {
-        o.x += o.vx; o.y += o.vy;
-        if (o.x < -200 || o.x > W * 3 + 200 || o.y < -200 || o.y > H * 3 + 200) {
-          return false;
-        }
-        return true;
-      });
-
-      orbs = orbs.filter(o => {
-        o.x += o.vx; o.y += o.vy;
-        return o.x > -200 && o.x < W * 3 + 200 && o.y > -200 && o.y < H * 3 + 200;
-      });
-
-      particles = particles.filter(p => {
-        p.x += p.vx; p.y += p.vy; p.vx *= 0.96; p.vy *= 0.96; p.life -= 0.025;
-        return p.life > 0;
-      });
-
-      // ── Collision ───────────────────────────────────────────────────────────
-      for (const o of obstacles) {
-        if (!o.active) continue;
-        const dx = tru.x - o.x;
-        const dy = tru.y - o.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < o.r + 14) {
-          running = false;
-          cancelAnimationFrame(raf);
-          setGameStatus("VANGUARD_PROTOCOL_TERMINATED");
-          spawnParticle(tru.x, tru.y, "#ff4422", 30, 6);
-          return;
-        }
-        if (pulseFlash > 3 && dist < o.r + 80) {
-          o.active = false;
-          spawnParticle(o.x, o.y, o.color, 18, 4);
-          scoreVal += 200 + Math.floor(streakVal * 20);
-          setScore(scoreVal);
-          setStreak(s => s + 1);
-          setTimeout(() => spawnObstacle(), 2000);
-        }
-      }
-
-      for (const orb of orbs) {
-        if (!orb.active) continue;
-        const dx = tru.x - orb.x;
-        const dy = tru.y - orb.y;
-        const dist = Math.sqrt(dx * dx + dy * dy);
-        if (dist < orb.r + 14) {
-          orb.active = false;
-          spawnParticle(orb.x, orb.y, `hsl(${orb.hue},100%,70%)`, 10, 3);
-          scoreVal += 100;
-          setScore(scoreVal);
-          setStreak(s => s + 1);
-          setTimeout(() => spawnOrb(), 3000);
-        }
-      }
-
-      // ── Draw ────────────────────────────────────────────────────────────────
-      ctx.fillStyle = "#050510";
-      ctx.fillRect(0, 0, W, H);
-
-      // Stars (parallax — move opposite to camera)
-      for (const s of stars) {
-        const sx = ((s.x - cam.x * 0.4) % (W * 3) + W * 3) % (W * 3);
-        const sy = ((s.y - cam.y * 0.4) % (H * 3) + H * 3) % (H * 3);
-        const tw = Math.sin(frame * 0.02 + s.twinkle) * 0.2 + 0.8;
-        ctx.fillStyle = `rgba(255,255,255,${s.brightness * tw})`;
-        ctx.fillRect(sx, sy, s.size, s.size);
-      }
-
-      // Nebula (slower parallax)
-      for (const n of nebula) {
-        const nx = ((n.x - cam.x * 0.15) % (W * 3) + W * 3) % (W * 3);
-        const ny = ((n.y - cam.y * 0.15) % (H * 3) + H * 3) % (H * 3);
-        const grad = ctx.createRadialGradient(nx, ny, 0, nx, ny, n.r);
-        grad.addColorStop(0, `hsla(${n.hue},80%,60%,${n.a * 3})`);
-        grad.addColorStop(1, "transparent");
-        ctx.fillStyle = grad;
-        ctx.fillRect(nx - n.r, ny - n.r, n.r * 2, n.r * 2);
-      }
-
-      // Particles
-      for (const p of particles) {
-        const px = p.x - cam.x;
-        const py = p.y - cam.y;
-        ctx.globalAlpha = p.life;
-        ctx.fillStyle = p.color;
-        ctx.fillRect(px - p.size, py - p.size, p.size * 2, p.size * 2);
-        ctx.globalAlpha = 1;
-      }
-
-      // Orbs
-      for (const orb of orbs) {
-        if (!orb.active) continue;
-        const ox = orb.x - cam.x;
-        const oy = orb.y - cam.y;
-        if (ox < -80 || ox > W + 80 || oy < -80 || oy > H + 80) continue;
-        const orbGrad = ctx.createRadialGradient(ox, oy, 0, ox, oy, orb.r);
-        orbGrad.addColorStop(0, `hsla(${orb.hue},100%,90%,0.9)`);
-        orbGrad.addColorStop(0.5, `hsla(${orb.hue},100%,60%,0.4)`);
-        orbGrad.addColorStop(1, "transparent");
-        ctx.fillStyle = orbGrad;
-        ctx.beginPath();
-        ctx.arc(ox, oy, orb.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.strokeStyle = `hsla(${orb.hue},100%,80%,0.8)`;
-        ctx.lineWidth = 1.5;
-        ctx.stroke();
-      }
-
-      // Obstacles
-      for (const o of obstacles) {
-        if (!o.active) continue;
-        const ox = o.x - cam.x;
-        const oy = o.y - cam.y;
-        if (ox < -80 || ox > W + 80 || oy < -80 || oy > H + 80) continue;
-        ctx.fillStyle = o.color;
-        ctx.shadowColor = o.color;
-        ctx.shadowBlur = 12;
-        ctx.beginPath();
-        ctx.arc(ox, oy, o.r, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.shadowBlur = 0;
-        ctx.strokeStyle = "rgba(255,100,100,0.9)";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-      }
-
-      // ── TRU Ship ───────────────────────────────────────────────────────
-      const tx = tru.x - cam.x;
-      const ty = tru.y - cam.y;
-      const speed = Math.sqrt(tru.vx * tru.vx + tru.vy * tru.vy);
-      const angle = Math.atan2(tru.vy, tru.vx) || 0;
-      tru.angle = angle;
-
-      ctx.save();
-      ctx.translate(tx, ty);
-      ctx.rotate(angle);
-
-      // Glow / engine
-      if (speed > 0.5) {
-        const glowGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 28);
-        glowGrad.addColorStop(0, "rgba(0,200,255,0.5)");
-        glowGrad.addColorStop(1, "transparent");
-        ctx.fillStyle = glowGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, 28, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Pulse flash on fire
-      if (pulseFlash > 0) {
-        const flashGrad = ctx.createRadialGradient(0, 0, 4, 0, 0, 30);
-        flashGrad.addColorStop(0, `rgba(255,255,255,${pulseFlash / 8})`);
-        flashGrad.addColorStop(1, "transparent");
-        ctx.fillStyle = flashGrad;
-        ctx.beginPath();
-        ctx.arc(0, 0, 30, 0, Math.PI * 2);
-        ctx.fill();
-      }
-
-      // Ship body
-      ctx.shadowColor = "#00ccff";
-      ctx.shadowBlur = 14;
-      ctx.fillStyle = "#00ddff";
-      ctx.beginPath();
-      ctx.moveTo(18, 0);
-      ctx.lineTo(-12, 10);
-      ctx.lineTo(-8, 0);
-      ctx.lineTo(-12, -10);
-      ctx.closePath();
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      // Cockpit
-      ctx.fillStyle = "#ffffff";
-      ctx.beginPath();
-      ctx.arc(4, 0, 4, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Engine glow
-      ctx.fillStyle = "#ff6600";
-      ctx.shadowColor = "#ff4400";
-      ctx.shadowBlur = 8;
-      ctx.beginPath();
-      ctx.arc(-10, 0, 4, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.shadowBlur = 0;
-
-      // P = pulse indicator ring
-      if (tru.fireTimer > 0) {
-        ctx.strokeStyle = `rgba(255,255,255,${tru.fireTimer / 18})`;
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.arc(0, 0, 20, 0, Math.PI * 2);
-        ctx.stroke();
-      }
-
-      ctx.restore();
-
-      // ── Edge arrows ────────────────────────────────────────────────────
-      const edgeMargin = 40;
-      if (tru.x < edgeMargin) {
-        ctx.fillStyle = "rgba(0,200,255,0.7)";
-        ctx.beginPath();
-        ctx.moveTo(10, ty);
-        ctx.lineTo(22, ty - 8);
-        ctx.lineTo(22, ty + 8);
-        ctx.fill();
-      }
-      if (tru.x > W - edgeMargin) {
-        ctx.fillStyle = "rgba(0,200,255,0.7)";
-        ctx.beginPath();
-        ctx.moveTo(W - 10, ty);
-        ctx.lineTo(W - 22, ty - 8);
-        ctx.lineTo(W - 22, ty + 8);
-        ctx.fill();
-      }
-      if (tru.y < edgeMargin) {
-        ctx.fillStyle = "rgba(0,200,255,0.7)";
-        ctx.beginPath();
-        ctx.moveTo(tx, 10);
-        ctx.lineTo(tx - 8, 22);
-        ctx.lineTo(tx + 8, 22);
-        ctx.fill();
-      }
-      if (tru.y > H - edgeMargin) {
-        ctx.fillStyle = "rgba(0,200,255,0.7)";
-        ctx.beginPath();
-        ctx.moveTo(tx, H - 10);
-        ctx.lineTo(tx - 8, H - 22);
-        ctx.lineTo(tx + 8, H - 22);
-        ctx.fill();
-      }
-
-      // ── HUD ──────────────────────────────────────────────────────────────
-      ctx.fillStyle = "rgba(0,0,0,0.6)";
-      ctx.fillRect(8, 8, 200, 76);
-      ctx.strokeStyle = "#00ddff";
-      ctx.lineWidth = 1;
-      ctx.strokeRect(8, 8, 200, 76);
-
-      ctx.font = "bold 11px monospace";
-      ctx.fillStyle = "#00ddff";
-      ctx.fillText(`SCORE: ${scoreVal.toLocaleString()}`, 16, 28);
-      ctx.fillStyle = "#ffaa00";
-      ctx.fillText(`STREAK: x${streakVal}`, 16, 46);
-      ctx.fillStyle = "#aaa";
-      ctx.font = "10px monospace";
-      ctx.fillText("WASD / ARROWS → FLY", 16, 62);
-      ctx.fillText("P → PULSE CANON", 16, 76);
-
-      if (showHint) {
-        ctx.fillStyle = "rgba(0,0,0,0.8)";
-        ctx.fillRect(W / 2 - 140, H / 2 - 20, 280, 40);
-        ctx.fillStyle = "#00ddff";
-        ctx.font = "12px monospace";
-        ctx.textAlign = "center";
-        ctx.fillText("WASD or ARROWS to fly  |  P to fire  |  Collect orbs", W / 2, H / 2 + 4);
-        ctx.textAlign = "left";
-        hintTimer = 0;
-      }
-    }
-
-    // ── Events ───────────────────────────────────────────────────────────────
-    const onKeyDown = (e: KeyboardEvent) => { keys[e.code] = true; if (["ArrowUp","ArrowDown","ArrowLeft","ArrowRight","Space"].includes(e.code)) e.preventDefault(); };
-    const onKeyUp = (e: KeyboardEvent) => { keys[e.code] = false; };
-    window.addEventListener("keydown", onKeyDown);
-    window.addEventListener("keyup", onKeyUp);
-
-    return () => {
-      cancelAnimationFrame(raf);
-      running = false;
-      window.removeEventListener("keydown", onKeyDown);
-      window.removeEventListener("keyup", onKeyUp);
-    };
-  }, []);
-
-  return (
-    <div className="relative w-full" style={{ minHeight: 480 }}>
-      <div className="mb-2 flex items-center gap-3">
-        <span className="text-xs font-mono text-zinc-400">ARCADE</span>
-        <span className="text-xs font-mono text-yellow-400">v4.5 — OMNI-VECTOR ENGAGED</span>
-        <span className="ml-auto text-xs font-mono text-cyan-400">WASD+P</span>
-      </div>
-      <div className="relative rounded border border-zinc-800 overflow-hidden" style={{ minHeight: 440 }}>
-        {gameStatus !== "CLICK TO INITIALIZE" ? (
-          <canvas ref={canvasRef} className="w-full block" style={{ height: 440 }} />
-        ) : (
-          <div
-            className="flex flex-col items-center justify-center cursor-pointer"
-            style={{ height: 440, background: "linear-gradient(135deg,#050510 0%,#0a0520 100%)" }}
-            onClick={start}
-          >
-            <div className="text-4xl font-bold text-cyan-400 mb-4">◆</div>
-            <div className="text-white font-mono text-lg mb-2">SOLAR INVADERS</div>
-            <div className="text-cyan-300 font-mono text-sm mb-6">OMNI-VECTOR FLIGHT v4.5</div>
-            <div className="text-zinc-400 text-xs font-mono mb-1">WASD / ARROWS — Omni-directional flight</div>
-            <div className="text-zinc-400 text-xs font-mono mb-4">P — Pulse canon</div>
-            <div className="px-6 py-2 rounded border border-cyan-500 text-cyan-400 text-sm font-mono">CLICK TO INITIALIZE</div>
-          </div>
-        )}
-      </div>
-      {gameStatus !== "CLICK TO INITIALIZE" && (
-        <div className="mt-2 grid grid-cols-3 gap-2 text-xs font-mono">
-          <div className="rounded bg-zinc-900 border border-zinc-800 p-2 text-center">
-            <div className="text-zinc-500">SCORE</div>
-            <div className="text-white font-bold text-lg">{score.toLocaleString()}</div>
-          </div>
-          <div className="rounded bg-zinc-900 border border-zinc-800 p-2 text-center">
-            <div className="text-zinc-500">STREAK</div>
-            <div className="text-yellow-400 font-bold text-lg">x{streak}</div>
-          </div>
-          <div className="rounded bg-zinc-900 border border-zinc-800 p-2 text-center">
-            <div className="text-zinc-500">STATUS</div>
-            <div className={`text-xs font-bold ${gameStatus === "ACTIVE" ? "text-green-400" : "text-yellow-400"}`}>{gameStatus}</div>
-          </div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tru-AI: The Coil System</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-slate-950 text-slate-50">
+    <!-- Navigation -->
+    <nav class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
+            <div class="text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Tru-AI
+            </div>
+            <a href="#documentation" class="text-slate-300 hover:text-cyan-400 transition">Documentation</a>
         </div>
-      )}
-    </div>
-  );
-}
-</script>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="min-h-screen flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+        <!-- Background gradient effect -->
+        <div class="absolute inset-0 bg-gradient-to-br from-cyan-900/20 via-slate-950 to-blue-900/20"></div>
+        
+        <div class="relative max-w-4xl mx-auto text-center">
+            <h1 class="text-5xl sm:text-6xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-cyan-400 via-blue-400 to-purple-400 bg-clip-text text-transparent">
+                Tru-AI: The Coil System
+            </h1>
+            <p class="text-xl sm:text-2xl text-slate-300 mb-8 leading-relaxed">
+                An intelligent framework for knowledge synchronization, data integrity, and autonomous agent operations.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <a href="#features" class="px-8 py-3 bg-cyan-500 hover:bg-cyan-600 text-white font-semibold rounded-lg transition">
+                    Explore Features
+                </a>
+                <a href="#about" class="px-8 py-3 border-2 border-cyan-400 text-cyan-400 hover:bg-cyan-400/10 font-semibold rounded-lg transition">
+                    Learn More
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- About Section -->
+    <section id="about" class="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/50">
+        <div class="max-w-4xl mx-auto">
+            <h2 class="text-4xl font-bold mb-8 text-center">About the System</h2>
+            
+            <div class="grid md:grid-cols-2 gap-8 mb-12">
+                <div class="bg-slate-800/50 p-8 rounded-lg border border-slate-700 hover:border-cyan-500/50 transition">
+                    <h3 class="text-2xl font-semibold text-cyan-400 mb-4">Intelligence Frameworks</h3>
+                    <p class="text-slate-300 leading-relaxed">
+                        Tru-AI operates on a foundation of structured intelligence, combining autonomous agent personas with robust knowledge management. The system implements sophisticated reasoning patterns, defensive mechanisms, and continuous optimization loops to maintain coherence and reliability.
+                    </p>
+                </div>
+                
+                <div class="bg-slate-800/50 p-8 rounded-lg border border-slate-700 hover:border-cyan-500/50 transition">
+                    <h3 class="text-2xl font-semibold text-cyan-400 mb-4">Operation Splashdown</h3>
+                    <p class="text-slate-300 leading-relaxed">
+                        Operation Splashdown represents the full ecosystem deployment of Tru-AI infrastructure. It encompasses synchronized knowledge bases, distributed sync protocols, and intelligent data pipelines—all designed to ensure seamless information flow and system coherence across boundaries.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bg-slate-800/30 border border-slate-700 rounded-lg p-8 text-center">
+                <p class="text-slate-300 text-lg">
+                    <span class="text-cyan-400 font-semibold">Tru</span> — Dry Truth, Steady Nudge. A resident intelligence agent with personality, skepticism, and autonomous decision-making capabilities. <span class="text-cyan-400 font-semibold">COIL</span> — The underlying data sync and transfer protocol ensuring knowledge integrity and real-time synchronization.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Grid -->
+    <section id="features" class="py-20 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <h2 class="text-4xl font-bold mb-12 text-center">Core Features</h2>
+            
+            <div class="grid md:grid-cols-3 gap-8">
+                <!-- Knowledge Bank -->
+                <div class="group relative bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-lg border border-slate-700 hover:border-cyan-400 transition overflow-hidden">
+                    <div class="absolute inset-0 bg-cyan-500/5 opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-cyan-500/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-cyan-500/30 transition">
+                            <svg class="w-6 h-6 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C6.5 6.253 2 10.998 2 17s4.5 10.747 10 10.747c5.5 0 10-4.998 10-10.747 0-6.002-4.5-10.747-10-10.747z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-cyan-400 transition">Knowledge Bank</h3>
+                        <p class="text-slate-400 leading-relaxed">
+                            Structured, searchable repository of verified facts, domain knowledge, and contextual information. Powers Tru's reasoning and decision-making.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Articles & Documentation -->
+                <div class="group relative bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-lg border border-slate-700 hover:border-blue-400 transition overflow-hidden">
+                    <div class="absolute inset-0 bg-blue-500/5 opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-blue-500/30 transition">
+                            <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-blue-400 transition">Articles & Documentation</h3>
+                        <p class="text-slate-400 leading-relaxed">
+                            Comprehensive guides, technical documentation, and knowledge artifacts. Accessible through the integrated wiki and documentation portal.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Sync Server -->
+                <div class="group relative bg-gradient-to-br from-slate-800 to-slate-900 p-8 rounded-lg border border-slate-700 hover:border-purple-400 transition overflow-hidden">
+                    <div class="absolute inset-0 bg-purple-500/5 opacity-0 group-hover:opacity-100 transition"></div>
+                    <div class="relative">
+                        <div class="w-12 h-12 bg-purple-500/20 rounded-lg flex items-center justify-center mb-4 group-hover:bg-purple-500/30 transition">
+                            <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 12h14M5 12a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v4a2 2 0 01-2 2M5 12a2 2 0 00-2 2v4a2 2 0 002 2h14a2 2 0 002-2v-4a2 2 0 00-2-2m-2-4h.01M17 16h.01"></path>
+                            </svg>
+                        </div>
+                        <h3 class="text-2xl font-bold mb-3 text-white group-hover:text-purple-400 transition">Sync Server</h3>
+                        <p class="text-slate-400 leading-relaxed">
+                            Real-time data synchronization engine. Handles binary chunk transfer, integrity verification, and distributed asset management across the network.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Documentation Section -->
+    <section id="documentation" class="py-20 px-4 sm:px-6 lg:px-8 bg-slate-900/50">
+        <div class="max-w-4xl mx-auto text-center">
+            <h2 class="text-4xl font-bold mb-6">Full Documentation</h2>
+            <p class="text-slate-300 text-lg mb-8">
+                Dive deeper into the Coil System with comprehensive guides, API documentation, and technical specifications.
+            </p>
+            <a href="https://deepwiki.com" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold rounded-lg transition transform hover:scale-105">
+                Open DeepWiki
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"></path>
+                </svg>
+            </a>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            <div class="grid md:grid-cols-3 gap-8 mb-8">
+                <div>
+                    <h4 class="font-bold text-cyan-400 mb-4">Tru-AI</h4>
+                    <p class="text-slate-400 text-sm">An intelligent framework for knowledge synchronization and autonomous agent operations.</p>
+                </div>
+                <div>
+                    <h4 class="font-bold text-cyan-400 mb-4">Quick Links</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li><a href="#about" class="hover:text-cyan-400 transition">About</a></li>
+                        <li><a href="#features" class="hover:text-cyan-400 transition">Features</a></li>
+                        <li><a href="#documentation" class="hover:text-cyan-400 transition">Documentation</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="font-bold text-cyan-400 mb-4">Resources</h4>
+                    <ul class="text-slate-400 text-sm space-y-2">
+                        <li><a href="https://github.com/splashdown1/coil-system" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition">GitHub Repository</a></li>
+                        <li><a href="https://deepwiki.com" target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition">DeepWiki</a></li>
+                    </ul>
+                </div>
+            </div>
+            <div class="border-t border-slate-800 pt-8 text-center text-slate-400 text-sm">
+                <p>&copy; 2026 Tru-AI: The Coil System. All rights reserved. | Operation Splashdown</p>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
